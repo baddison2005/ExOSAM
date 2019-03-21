@@ -17,8 +17,9 @@ import pandas as pd
 
 #--------------------------------Grab parameters from the RM analysis program.-----------------------------------------#
 def RV_model_array(data_plot_model_interval, Number_orbits, Bessel_function_exit, Jupiter_units, use_Rp_Rs_ratio, vsini,
-                   stellar_rotation_angle, orbital_period1, JD_time_mid_transit, Mp_best, Rp_best, Ms_solar, Rs_solar,
-                   Rp_Rs_ratio, Ecc, Inc, omega_arg_periastron, beta_rot, vmacro, linear_quadratic, q_1, q_2, u, Albedo,
+                   stellar_rotation_angle, orbital_period1, JD_time_mid_transit, Mp_best, Mp_fixed, Rp_best, Ms_solar,
+                   Rs_solar, Rp_Rs_ratio, Ecc, Inc, omega_arg_periastron, beta_rot, vmacro, linear_quadratic, q_1, q_2,
+                   u, K_amp, use_K_amp, Impact, use_Impact, Rorb_Rs, use_Rorb_Rs_ratio, test_null_hypothesis, Albedo,
                    M_pixels):
 
 
@@ -40,33 +41,52 @@ def RV_model_array(data_plot_model_interval, Number_orbits, Bessel_function_exit
 
 
 #---------------------------------------Planetary orbital calculations-------------------------------------------------#
-    if Jupiter_units == 'Y':
-        Mp = Mp_best * Mj
-        if use_Rp_Rs_ratio == 'Y':
-            Rp = Rp_Rs_ratio * (Rs_solar * Rss)
-        else:
-            Rp = Rp_best * Rj
-        #endelse
-    #endif
-
-    if Jupiter_units == 'N':
-        Mp = Mp_best * Me
-        if use_Rp_Rs_ratio == 'Y':
-            Rp = Rp_Rs_ratio * (Rs_solar * Rss)
-        else:
-            Rp = Rp_best * RE
-        #endelse
-    #endif
-
+    Ms = Mss * Ms_solar  # Mass of the star (in kg).
     Orbital_period_day = orbital_period1
-    Orbital_period = orbital_period1*3600.0*24.0
+    Orbital_period = orbital_period1 * 3600.0 * 24.0
+    if use_Impact == 'Y' and use_Rorb_Rs_ratio == 'Y':
+        Inc = math.acos((Impact/(Rorb_Rs))*((1.0 +
+                                            (Ecc*math.sin(omega_arg_periastron*(pi/180.0))))/(1.0 - Ecc**2.0)))*\
+                                            (180.0/pi)
+    #END IF
 
-    Ms = Mss * Ms_solar                             #Mass of the star (in kg).
-    Rs = Rss * Rs_solar                             #Radius of star (in meters).
+    if use_K_amp == 'Y' and Mp_fixed == 'Y' and Ecc == 0:
+        Mp = ((Orbital_period)/(2.0*pi*G))**(1.0/3.0)*((Ms**(2.0/3.0)*K_amp)/math.sin(Inc*(pi/180.0)))
+    else:
+        if Jupiter_units == 'Y':
+            Mp = Mp_best*Mj
+        #END IF
+
+        if Jupiter_units == 'N':
+            Mp = Mp_best*Me
+        #END IF
+    #END IF
+
+    Rorb = ((Orbital_period**2.0*G*(Ms + Mp))/(4.0*pi**2.0))**(1.0/3.0)     #Semi-major axis.
+    #Semi-major of stellar axis.
+    Rorb_star = ((Orbital_period**2.0*G*((Mp**(3.0))/(Ms + Mp)**(2.0)))/(4.0*pi**2.0))**(1.0/3.0)
+
+    if use_Rorb_Rs_ratio == 'Y':
+        Rs = Rorb/(Rorb_Rs)
+    else:
+        Rs = Rss * Rs_solar
+    #END IF
+
+    #Based on given priors, determine the approximate time in the simulation to start and finish comparing
+    #RV's with model.
+    if use_Rp_Rs_ratio == 'Y':
+        Rp = Rp_Rs_ratio * Rs
+    else:
+        if Jupiter_units == 'Y':
+            Rp = Rp_best*Rj
+        #END IF
+
+        if Jupiter_units == 'N':
+            Rp = Rp_best*RE
+        #END IF
+    #END IF
+
     RV = 0.0                                        #Set the RV to zero.
-    Rorb = ((Orbital_period**(2.0)*G*(Ms + Mp))/(4.0*pi**(2.0)))**(1.0/3.0)     #Semi-major axis
-    #Star Semi-major axis.
-    Rorb_star = ((Orbital_period**(2.0)*G*((Mp**(3.0))/(Ms + Mp)**(2.0)))/(4.0*pi**(2.0)))**(1.0/3.0)
     Rs2 = Rs**2.0                                   #Variable to speed up calculations.
     Rp2 = Rp**2.0                                   #Variable to speed up calculations.
     L_total_star = 1.0                              #Normalize total luminosity of star to 1.
@@ -83,6 +103,11 @@ def RV_model_array(data_plot_model_interval, Number_orbits, Bessel_function_exit
     Aplan = pi*Rp2                                  #Surface area of the planet.
     vturb = math.sqrt(beta_rot**2.0 + vmacro**2.0)    #Velocity width of spectral line due to mechanisms other than
                                                     #rotation (i.e. micro and macro turbulence).
+
+
+    if test_null_hypothesis:
+        vsini = 0.0
+        vturb = 0.0
 
     True_anomaly_start = pi - omega_arg_periastron*(pi/180.0)
     print("True_anomaly_start: ", True_anomaly_start*(180.0/pi))
@@ -109,17 +134,25 @@ def RV_model_array(data_plot_model_interval, Number_orbits, Bessel_function_exit
     time_peri_passage = (JD_time_mid_transit*24.0*3600.0) - JD_time_peri
     print("time_peri_passage: ", time_peri_passage)
 
-    if Ecc == 0:
-        #Maximum amplitude caused by the exoplanet in a circular orbit.
-        RVamplitude = math.sqrt((G*(Mp**(3.0))*(math.sin(Inc*(pi/180.0)))**(3.0))/
-                               (Rorb_star*math.sin(Inc*(pi/180.0))*(Ms + Mp)**(2.0)))
+    if use_K_amp == 'Y':
+        RVamplitude = K_amp
+    else:
+        if Ecc == 0:
+            #Maximum amplitude caused by the exoplanet in a circular orbit.
+            #RVamplitude = (Mp/Ms)*sqrt((G*(Ms + Mp))/Rorb)*sin(Inc*(pi/180.0D0))
+            RVamplitude = math.sqrt((G*(Mp**(3.0))*(math.sin(Inc*(pi/180.0)))**(3.0))/
+                        (Rorb_star*math.sin(Inc*(pi/180.0))*(Ms + Mp)**(2.0)))
+        else:
+            #Maximum amplitude caused by the exoplanet in an eccentric orbit.
+            #RVamplitude = (1.0D0/sqrt(1.0D0 - Ecc^2.0D0))*(Mp/Ms)*sqrt((G*(Ms + Mp))/Rorb)*sin(Inc*(pi/180.0D0))
+            RVamplitude = math.sqrt((G*(Mp**(3.0))*(math.sin(Inc*(pi/180.0)))**(3.0))/
+                        ((1.0 - Ecc**2.0)*Rorb_star*math.sin(Inc*(pi/180.0))*(Ms + Mp)**(2.0)))
+        #endelse
+    #endelse
 
+    if Ecc == 0:
         Time_start = ((ecc_anomaly_start * Orbital_period) / (2.0 * pi)) + time_peri_passage
     else:
-        #Maximum amplitude caused by the exoplanet in an eccentric orbit.
-        RVamplitude = math.sqrt((G*(Mp**(3.0))*(math.sin(Inc*(pi/180.0)))**(3.0))/
-                               ((1.0 - Ecc**2.0)*Rorb_star*math.sin(Inc*(pi/180.0))*(Ms + Mp)**(2.0)))
-
         Time_start = (((ecc_anomaly_start-(Ecc*math.sin(ecc_anomaly_start)))*Orbital_period)/(2.0*pi))+time_peri_passage
     #endelse
 
@@ -223,12 +256,12 @@ def RV_model_array(data_plot_model_interval, Number_orbits, Bessel_function_exit
 
         if Ecc == 0:
             #The time of the similation for a specific true_anomaly with the mid transit time equal to 0.
-            Time_check = ((ecc_anomaly*Orbital_period)/(2.0*pi)) + time_peri_passage
+            #Time_check = ((ecc_anomaly*Orbital_period)/(2.0*pi)) + time_peri_passage
             #The distance between the center of the planet to the center of the star in a circular orbit.
             Planet_star_distance = Rorb + Rorb_star
         else:
             #The time of the similation for a specific true_anomaly.
-            Time_check = (((ecc_anomaly - (Ecc*math.sin(ecc_anomaly)))*Orbital_period)/(2.0*pi)) + time_peri_passage
+            #Time_check = (((ecc_anomaly - (Ecc*math.sin(ecc_anomaly)))*Orbital_period)/(2.0*pi)) + time_peri_passage
             #The distance between the center of the planet to the center of the star in an eccentric orbit.
             Planet_star_distance = ((Rorb + Rorb_star)*(1.0 - Ecc**2.0))/(1.0 + (Ecc*math.cos(True_anomaly)))
         #endelse
@@ -254,52 +287,7 @@ def RV_model_array(data_plot_model_interval, Number_orbits, Bessel_function_exit
         v_rm = 0.0                                      #Anomalous velocity of each pixel set to zero.
         Total_RM = 0.0
 
-        #print("Zpos: ", Zpos)
-
-        if Xpos <= 0 and Zpos >= 0:
-            #Planet is currently in quadrant three so add pi.
-            if Zpos == 0:
-                phase_angle = pi/2.0
-                Phase_angle_observed = pi/2.0
-            else:
-                phase_angle = math.atan(Xpos/Zpos) + pi
-                #Taking into account orbital inclination.
-                Phase_angle_observed = math.atan(-(math.sqrt(Xpos**2.0 + Ypos**2.0))/Zpos) + pi
-            #endelse
-        elif Xpos >= 0 and Zpos >= 0:
-            if Zpos == 0:
-                phase_angle = pi/2.0 + pi
-                Phase_angle_observed = pi/2.0 + pi
-            else:
-                # Planet is currently in quadrant four so add pi.
-                phase_angle = math.atan(Xpos / Zpos) + pi
-                # Taking into account orbital inclination.
-                Phase_angle_observed = math.atan((math.sqrt(Xpos ** 2.0 + Ypos ** 2.0)) / Zpos) + pi
-            #endelse
-        elif Xpos >= 0 and Zpos <= 0:
-            if Zpos == 0:
-                phase_angle = pi/2.0
-                Phase_angle_observed = pi/2.0
-            else:
-                # Planet is currently in quadrant one so add 2pi.
-                phase_angle = 2.0 * pi + math.atan(Xpos / Zpos)
-                # Taking into account orbital inclination.
-                Phase_angle_observed = 2.0 * pi + math.atan((math.sqrt(Xpos ** 2.0 + Ypos ** 2.0)) / Zpos)
-            #endelse
-        elif Xpos <= 0 and Zpos <= 0:
-            if Zpos == 0:
-                phase_angle = pi/2.0 + pi
-                Phase_angle_observed = pi/2.0 + pi
-            else:
-                # Planet is currently in quadrant two.
-                phase_angle = math.atan(Xpos / Zpos)
-                # Taking into account orbital inclination.
-                Phase_angle_observed = math.atan(-(math.sqrt(Xpos ** 2.0 + Ypos ** 2.0)) / Zpos)
-            #endelse
-        #endelse
-
         True_phase = math.acos(math.sin(True_anomaly + (omega_arg_periastron*(pi/180.0)))*math.sin(Inc*(pi/180.0)))
-        Phase_orbit_n = math.acos(math.sin(True_anomaly + (omega_arg_periastron*(pi/180.0))))
 
         #If the planet is neither in front of the star (transit) or behind the star (occultation), then calculate the
         #flux being reflected off the surface of the exoplanet based on its bond albedo, radius, phase angle, etc.
@@ -314,7 +302,6 @@ def RV_model_array(data_plot_model_interval, Number_orbits, Bessel_function_exit
             Transit_start_no_inc = Time_ref              #Indicates when the transit starts at 90 inc. If statement
                                                          #prevents this variable from being overwritten every time the
                                                          #loop runs.
-            Transit_start_no_inc_position = Time_loop    #Location in array.
         #endif
 
         if Distance_center <= (Rs + Rp) and Zpos > 0:
@@ -324,13 +311,10 @@ def RV_model_array(data_plot_model_interval, Number_orbits, Bessel_function_exit
             if Time_transit_start == 0:
                 Time_transit_start = Time_ref          #Indicates when the transit starts. If statement prevents this
                                                        #variable from being overwritten every time the loop runs.
-                transit_start_position = Time_loop
             #endif
 
             if (Rp2/Rs2) >= 0.030:
                 Radius_planet_array = M_pixels / 2.0      #Radius of planet in the pixel array.
-                Center_of_planet_x = M_pixels / 2.0       #The center of the planet on the X-axis.
-                Center_of_planet_y = M_pixels / 2.0       #The center of the planet on the Y-axis.
                 Pixel = Rp/Radius_planet_array            #The number of meters per pixel.
                 Area_pixel = Pixel**2.0                   #The area of each pixel.
                 Io_Pixel = Io * Area_pixel                #Variable to speed up calculations (also physically
@@ -368,9 +352,12 @@ def RV_model_array(data_plot_model_interval, Number_orbits, Bessel_function_exit
 
                             Lblocked = Lblocked + Lblocked2                     #First order limb darkening equation.
                             # Anomalous velocity of each pixel.
-                            v_rm = v_rm - ((Lblocked2*Sub_planet_velocity)*((((2.0*vturb**2.0)+(2.0*vsini**2.0))/
-                                   ((2.0*vturb**2.0) + vsini**2.0))**(3.0/2.0))*(1.0-((Sub_planet_velocity**2.0)/
-                                   ((2.0*vturb**2.0)+(vsini**2.0)))))
+                            if test_null_hypothesis:
+                                v_rm = 0.0
+                            else:
+                                v_rm = v_rm - ((Lblocked2*Sub_planet_velocity)*((((2.0*vturb**2.0)+(2.0*vsini**2.0))/
+                                       ((2.0*vturb**2.0) + vsini**2.0))**(3.0/2.0))*(1.0-((Sub_planet_velocity**2.0)/
+                                       ((2.0*vturb**2.0)+(vsini**2.0)))))
 
                         #endif
                     #endfor
@@ -479,8 +466,11 @@ def RV_model_array(data_plot_model_interval, Number_orbits, Bessel_function_exit
                     #linear limb darkening equation.
                     Lblocked = (Io_planet)*(1.0-(u*(1.0-math.sqrt(math.fabs(1.0-(set_distance_center**2.0/Rs2))))))
                 #endelse
-                v_rm = - ((Lblocked*Sub_planet_velocity)*((((2.0*vturb**2.0)+(2.0*vsini**2.0))/((2.0*vturb**2.0)
-                       + vsini**2.0))**(3.0/2.0))*(1.0-((Sub_planet_velocity**2.0)/((2.0*vturb**2.0)+(vsini**2.0)))))
+                if test_null_hypothesis:
+                    v_rm = 0.0
+                else:
+                    v_rm = - ((Lblocked*Sub_planet_velocity)*((((2.0*vturb**2.0)+(2.0*vsini**2.0))/((2.0*vturb**2.0)
+                           + vsini**2.0))**(3.0/2.0))*(1.0-((Sub_planet_velocity**2.0)/((2.0*vturb**2.0)+(vsini**2.0)))))
                 Total_L = 1.0 - Lblocked                      #Total amount of light blocked by the planet.
                 Total_RM = 0.0 + v_rm                         #Total anomalous velocity.
 

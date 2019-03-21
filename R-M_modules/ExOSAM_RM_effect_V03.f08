@@ -1,4 +1,4 @@
-PROGRAM ExOSAM_RM_effect_V02
+PROGRAM ExOSAM_RM_effect_V03
 
 !   Purpose: To determine the best fit values for the spin-orbit alignment and rotational velocity of the host star from a 
 !        given data set of the radial velocities during the RM effect as well as out-of-transit RVs and input priors. This 
@@ -8,6 +8,7 @@ PROGRAM ExOSAM_RM_effect_V02
 
 use ran_mod
 use init_seed
+USE, INTRINSIC :: ISO_FORTRAN_ENV
 implicit none
 
 !Constants and parameter declerations.
@@ -53,7 +54,6 @@ double precision :: ecc_anomaly_after
 double precision :: ecc_anomaly_before
 double precision :: ecc_anomaly_start
 double precision :: ecc_anomaly_transit
-double precision :: impact_prior
 double precision :: Inc_prior
 double precision :: Inc_end
 double precision :: Inc_begin
@@ -68,6 +68,7 @@ double precision :: JD_time_mid_transit_prior
 double precision :: JD_time_mid_transit_end
 double precision :: JD_time_mid_transit_begin
 double precision :: JD_time_mid_transit_1sigerr
+double precision :: K_amp
 double precision :: Lblocked
 double precision :: Lblocked2
 double precision :: Length
@@ -135,6 +136,37 @@ double precision :: RV_zero_offset_end
 double precision :: RV_zero_offset_interval
 double precision :: RV_zero_offset_prior
 double precision :: RV_zero_offset_1sigerr
+
+double precision :: vmacro_prior
+double precision :: vmacro_end
+double precision :: vmacro_begin
+double precision :: vmacro_1sigerr
+double precision :: q_1_prior
+double precision :: q_1_end
+double precision :: q_1_begin
+double precision :: q_1_1sigerr
+double precision :: q_2_prior
+double precision :: q_2_end
+double precision :: q_2_begin
+double precision :: q_2_1sigerr
+double precision :: K_amp_prior
+double precision :: K_amp_end
+double precision :: K_amp_begin
+double precision :: K_amp_1sigerr
+double precision :: Impact
+double precision :: Impact_prior
+double precision :: Impact_end
+double precision :: Impact_begin
+double precision :: Impact_1sigerr
+double precision :: Rorb_Rs
+double precision :: Rorb_Rs_prior
+double precision :: Rorb_Rs_end
+double precision :: Rorb_Rs_begin
+double precision :: Rorb_Rs_1sigerr
+
+
+
+
 double precision :: min_chi_squared_all_walkers
 double precision :: min_reduced_chi_squared_all_walkers
 double precision :: max_likelihood_all_walkers
@@ -152,6 +184,12 @@ double precision :: best_Inc_chi2_all_walkers
 double precision :: best_omega_arg_periastron_chi2_all_walkers
 double precision :: best_vsini_chi2_all_walkers
 double precision :: best_spin_orbit_chi2_all_walkers
+double precision :: best_vmacro_chi2_all_walkers
+double precision :: best_q_1_chi2_all_walkers
+double precision :: best_q_2_chi2_all_walkers
+double precision :: best_K_amp_chi2_all_walkers
+double precision :: best_Impact_chi2_all_walkers
+double precision :: best_Rorb_Rs_chi2_all_walkers
 
 
 
@@ -172,6 +210,12 @@ double precision :: best_spin_orbit_chi2                          !MCMC variable
 double precision :: best_Ms_solar_chi2                            !MCMC variables.
 double precision :: best_Rs_solar_chi2                            !MCMC variables.
 double precision :: best_Rp_Rs_ratio_chi2                         !MCMC variables.
+double precision :: best_vmacro_chi2                              !MCMC variables.
+double precision :: best_q_1_chi2                                 !MCMC variables.
+double precision :: best_q_2_chi2                                 !MCMC variables.
+double precision :: best_K_amp_chi2                               !MCMC variables.
+double precision :: best_Impact_chi2                              !MCMC variables.
+double precision :: best_Rorb_Rs_chi2                             !MCMC variables.
 ! ********************************** change scale_factor to user input ************************************************
 double precision :: scale_factor                                  !Scale factor that controls the step-size of the MCMC.
 double precision :: scale_factor_in
@@ -294,6 +338,48 @@ double precision :: Ms_solar_stand_dev_MCMC                       !MCMC variable
 double precision :: Ms_solar_sum                                  !MCMC variables.
 double precision :: Ms_solar_mean                                 !MCMC variables.
 double precision :: Ms_solar_diff_mean_2                          !MCMC variables.
+double precision :: vmacro_variance                               !MCMC variables.
+double precision :: vmacro_variance_MCMC                          !MCMC variables.
+double precision :: vmacro_stand_dev                              !MCMC variables.
+double precision :: vmacro_stand_dev_MCMC                         !MCMC variables.
+double precision :: vmacro_sum                                    !MCMC variables.  
+double precision :: vmacro_mean                                   !MCMC variables.
+double precision :: vmacro_diff_mean_2                            !MCMC variables.
+double precision :: q_1_variance                                  !MCMC variables.
+double precision :: q_1_variance_MCMC                             !MCMC variables.
+double precision :: q_1_stand_dev                                 !MCMC variables.
+double precision :: q_1_stand_dev_MCMC                            !MCMC variables.
+double precision :: q_1_sum                                       !MCMC variables.
+double precision :: q_1_mean                                      !MCMC variables.
+double precision :: q_1_diff_mean_2                               !MCMC variables.
+double precision :: q_2_variance                                  !MCMC variables.
+double precision :: q_2_variance_MCMC                             !MCMC variables.
+double precision :: q_2_stand_dev                                 !MCMC variables.
+double precision :: q_2_stand_dev_MCMC                            !MCMC variables.
+double precision :: q_2_sum                                       !MCMC variables.
+double precision :: q_2_mean                                      !MCMC variables.
+double precision :: q_2_diff_mean_2                               !MCMC variables.
+double precision :: K_amp_variance                                !MCMC variables.
+double precision :: K_amp_variance_MCMC                           !MCMC variables.
+double precision :: K_amp_stand_dev                               !MCMC variables.
+double precision :: K_amp_stand_dev_MCMC                          !MCMC variables.
+double precision :: K_amp_sum                                     !MCMC variables.
+double precision :: K_amp_mean                                    !MCMC variables.
+double precision :: K_amp_diff_mean_2                             !MCMC variables.
+double precision :: Impact_variance                                !MCMC variables.
+double precision :: Impact_variance_MCMC                           !MCMC variables.
+double precision :: Impact_stand_dev                               !MCMC variables.
+double precision :: Impact_stand_dev_MCMC                          !MCMC variables.
+double precision :: Impact_sum                                     !MCMC variables.
+double precision :: Impact_mean                                    !MCMC variables.
+double precision :: Impact_diff_mean_2                             !MCMC variables.
+double precision :: Rorb_Rs_variance                                !MCMC variables.
+double precision :: Rorb_Rs_variance_MCMC                           !MCMC variables.
+double precision :: Rorb_Rs_stand_dev                               !MCMC variables.
+double precision :: Rorb_Rs_stand_dev_MCMC                          !MCMC variables.
+double precision :: Rorb_Rs_sum                                     !MCMC variables.
+double precision :: Rorb_Rs_mean                                    !MCMC variables.
+double precision :: Rorb_Rs_diff_mean_2                             !MCMC variables.
 
 
 
@@ -311,6 +397,13 @@ double precision :: Inc_1sigerr_temp                              !MCMC variable
 double precision :: Ms_solar_1sigerr_temp                         !MCMC variables.
 double precision :: Rs_solar_1sigerr_temp                         !MCMC variables.
 double precision :: Rp_Rs_ratio_1sigerr_temp                      !MCMC variables.
+double precision :: vmacro_1sigerr_temp                           !MCMC variables.
+double precision :: q_1_1sigerr_temp                              !MCMC variables.
+double precision :: q_2_1sigerr_temp                              !MCMC variables.
+double precision :: K_amp_1sigerr_temp                            !MCMC variables.
+double precision :: Impact_1sigerr_temp                            !MCMC variables.
+double precision :: Rorb_Rs_1sigerr_temp                            !MCMC variables.
+
 
 
 
@@ -326,7 +419,6 @@ double precision :: sum_ecc_anomaly
 double precision :: Transit_length_prior
 double precision :: Time
 double precision :: Time_bef_aft
-double precision :: Time_check
 double precision :: Time_compare_vel
 double precision :: time_peri_passage
 double precision :: Time_ref
@@ -396,6 +488,18 @@ double precision :: vsini_sum3
 double precision :: vsini_mean2
 double precision :: stellar_rotation_angle_sum3
 double precision :: stellar_rotation_angle_mean2
+double precision :: vmacro_sum3
+double precision :: vmacro_mean2
+double precision :: q_1_sum3
+double precision :: q_1_mean2
+double precision :: q_2_sum3
+double precision :: q_2_mean2
+double precision :: K_amp_sum3
+double precision :: K_amp_mean2
+double precision :: Impact_sum3
+double precision :: Impact_mean2
+double precision :: Rorb_Rs_sum3
+double precision :: Rorb_Rs_mean2
 
 
 
@@ -442,8 +546,15 @@ integer(8) :: Inc_draw_loop
 integer(8) :: omega_arg_periastron_draw_loop
 integer(8) :: RV_zero_offset_draw_loop
 integer(8) :: stellar_rotation_angle_draw_loop
+integer(8) :: vmacro_draw_loop
+integer(8) :: q_1_draw_loop
+integer(8) :: q_2_draw_loop
+integer(8) :: K_amp_draw_loop
+integer(8) :: Impact_draw_loop
+integer(8) :: Rorb_Rs_draw_loop
 integer(8) :: cr, cm, system_time_1, system_time_it1, system_time_it2
 integer(8) :: system_time_4
+integer(8) :: count_mask
 
 !character variable declerations.
 character(LEN=100) :: cmd1
@@ -482,6 +593,20 @@ character(LEN=1) :: vsini_fixed
 character(LEN=1) :: stellar_rotation_angle_norm_prior
 character(LEN=1) :: impose_prior_stellar_rotation_angle
 character(LEN=1) :: stellar_rotation_angle_fixed
+character(LEN=1) :: vmacro_norm_prior
+character(LEN=1) :: vmacro_fixed
+character(LEN=1) :: q_norm_prior
+character(LEN=1) :: q_fixed
+character(LEN=1) :: K_amp_norm_prior
+character(LEN=1) :: K_amp_fixed
+character(LEN=1) :: use_K_amp
+character(LEN=1) :: Impact_norm_prior
+character(LEN=1) :: Impact_fixed
+character(LEN=1) :: use_Impact
+character(LEN=1) :: Rorb_Rs_norm_prior
+character(LEN=1) :: Rorb_Rs_fixed
+character(LEN=1) :: use_Rorb_Rs_ratio
+character(LEN=1) :: test_null
 
 character(LEN=25) :: string_bar
 character(LEN=1) :: Jupiter_Earth_units
@@ -559,6 +684,18 @@ character(LEN=150) :: output_best_param_chi_squared_filename
 character(LEN=150) :: output_best_param_mean_filename
 character(LEN=150) :: output_stand_dev_filename
 character(LEN=150) :: output_scale_factor_array_filename
+character(LEN=150) :: output_vmacro_MCMC_array_filename
+character(LEN=150) :: output_vmacro_all_array_filename
+character(LEN=150) :: output_q_1_MCMC_array_filename
+character(LEN=150) :: output_q_1_all_array_filename
+character(LEN=150) :: output_q_2_MCMC_array_filename
+character(LEN=150) :: output_q_2_all_array_filename
+character(LEN=150) :: output_K_amp_MCMC_array_filename
+character(LEN=150) :: output_K_amp_all_array_filename
+character(LEN=150) :: output_Impact_MCMC_array_filename
+character(LEN=150) :: output_Impact_all_array_filename
+character(LEN=150) :: output_Rorb_Rs_MCMC_array_filename
+character(LEN=150) :: output_Rorb_Rs_all_array_filename
 
 
 
@@ -572,6 +709,12 @@ CHARACTER(len=1), Allocatable :: data_points_compare(:)
 
 
 !Arrays created for MCMC
+DOUBLE PRECISION, Allocatable :: vmacro_accept_mcmc_array(:,:), vmacro_all_mcmc_array(:,:), vmacro_sum2(:)
+DOUBLE PRECISION, Allocatable :: q_1_accept_mcmc_array(:,:), q_1_all_mcmc_array(:,:), q_1_sum2(:)
+DOUBLE PRECISION, Allocatable :: q_2_accept_mcmc_array(:,:), q_2_all_mcmc_array(:,:), q_2_sum2(:)
+DOUBLE PRECISION, Allocatable :: K_amp_accept_mcmc_array(:,:), K_amp_all_mcmc_array(:,:), K_amp_sum2(:)
+DOUBLE PRECISION, Allocatable :: Impact_accept_mcmc_array(:,:), Impact_all_mcmc_array(:,:), Impact_sum2(:)
+DOUBLE PRECISION, Allocatable :: Rorb_Rs_accept_mcmc_array(:,:), Rorb_Rs_all_mcmc_array(:,:), Rorb_Rs_sum2(:)
 DOUBLE PRECISION, Allocatable :: RV_offset_datasets_accept_mcmc_array(:,:), RV_offset_datasets_all_mcmc_array(:,:)
 DOUBLE PRECISION, Allocatable :: RV_offset_datasets_sum2(:)
 DOUBLE PRECISION, Allocatable :: Orbital_period_accept_mcmc_array(:,:), Orbital_period_all_mcmc_array(:,:)
@@ -613,6 +756,8 @@ DOUBLE PRECISION, Allocatable :: walker_parameter_array(:,:), walker_parameter_a
 DOUBLE PRECISION, Allocatable :: walker_parameter_array_variance(:,:), walker_parameter_array_stand_dev(:,:)
 DOUBLE PRECISION, Allocatable :: min_chi_squared_MCMC(:), min_reduced_chi_squared_MCMC(:), max_likelihood_MCMC(:)
 DOUBLE PRECISION, Allocatable :: scale_factor_array(:,:)
+DOUBLE PRECISION, Allocatable :: omega_arg_periastron_sorted_array(:,:)
+DOUBLE PRECISION, Allocatable :: omega_arg_periastron_sorted_array2(:)
 LOGICAL, Allocatable :: mask_array(:,:)
 
 integer(8), DIMENSION(2) :: loc_min_chi_squared_all_walkers, loc_min_reduced_chi_squared_all_walkers
@@ -623,13 +768,17 @@ integer(8), DIMENSION(2) :: loc_max_likelihood_all_walkers
 
 DOUBLE PRECISION, Allocatable :: normal1(:,:), normal2(:,:), normal3(:,:), normal4(:,:), normal5(:,:), normal6(:,:)
 DOUBLE PRECISION, Allocatable :: normal7(:,:), normal8(:,:), normal9(:,:), normal10(:,:), normal11(:,:), normal12(:,:)
-DOUBLE PRECISION, Allocatable :: normal13(:,:), normal14(:,:), random_draw_array(:,:)
+DOUBLE PRECISION, Allocatable :: normal13(:,:), normal14(:,:), normal15(:,:), normal16(:,:), normal17(:,:)
+DOUBLE PRECISION, Allocatable :: normal18(:,:), normal19(:,:), normal20(:,:), random_draw_array(:,:)
 
 DOUBLE PRECISION, Allocatable :: spread_rand_RV_offset(:,:), spread_rand_Orbital_period(:,:), spread_rand_JD(:,:)
 DOUBLE PRECISION, Allocatable :: spread_rand_Mp(:,:), spread_rand_Rp(:,:), spread_rand_Rp_Rs_ratio(:,:)
 DOUBLE PRECISION, Allocatable :: spread_rand_Rs(:,:), spread_rand_Ms(:,:), spread_rand_Ecc(:,:)
 DOUBLE PRECISION, Allocatable :: spread_rand_Inc(:,:), spread_rand_omega(:,:), spread_rand_RV_zero(:,:)
 DOUBLE PRECISION, Allocatable :: spread_rand_vsini(:,:), spread_rand_spin_orbit(:,:)
+DOUBLE PRECISION, Allocatable :: spread_rand_vmacro(:,:), spread_rand_q_1(:,:)
+DOUBLE PRECISION, Allocatable :: spread_rand_q_2(:,:), spread_rand_K_amp(:,:)
+DOUBLE PRECISION, Allocatable :: spread_rand_Impact(:,:), spread_rand_Rorb_Rs(:,:)
 
 
 
@@ -651,8 +800,6 @@ PRINT *, 'input_data_filename = ', input_data_filename
 
 
 
-
-
 !Read in output data from IDL and assaign values to parameters and variables.
 OPEN(unit=99, FILE=TRIM(ADJUSTL(input_data_filename)), status='old', action='read')
 !Now read line by line of data file and assaign values to parameters and variable.
@@ -664,19 +811,28 @@ my_data_plotting_symbols, other_data_plotting_symbols, Ms_solar_prior, Ms_solar_
 Ms_solar_1sigerr, Ms_solar_norm_prior, Ms_solar_fixed, Rs_solar_prior, Rs_solar_end, &
 Rs_solar_begin, Rs_solar_1sigerr, Rs_solar_norm_prior, Rs_solar_fixed, Rp_Rs_ratio_prior, &
 Rp_Rs_ratio_end, Rp_Rs_ratio_begin, Rp_Rs_ratio_1sigerr, Rp_Rs_ratio_norm_prior, Rp_Rs_ratio_fixed, &
-use_Rp_Rs_ratio, vmacro, beta_rot, M_pixels, linear_quadratic, &
-u, q_1, q_2, Inc_prior, Inc_end, &
-Inc_begin, Inc_1sigerr, Inc_norm_prior, Inc_fixed, omega_arg_periastron_prior, &
-omega_arg_periastron_end, omega_arg_periastron_begin, omega_arg_periastron_1sigerr, omega_arg_periastron_norm_prior, omega_arg_periastron_fixed, &
-Ecc_prior, Ecc_end, Ecc_begin, Ecc_1sigerr, Ecc_norm_prior, &
-Ecc_fixed, Mp_prior, Mp_end, Mp_begin, Mp_1sigerr, &
-Mp_norm_prior, Mp_fixed, Rp_prior, Rp_end, Rp_begin, &
-Rp_1sigerr, Rp_norm_prior, Rp_fixed, Orbital_period_prior, Orbital_period_end, &
-Orbital_period_begin, Orbital_period_1sigerr, Orbital_period_norm_prior, Orbital_period_fixed, JD_time_mid_transit_prior, &
-JD_time_mid_transit_end, JD_time_mid_transit_begin, JD_time_mid_transit_1sigerr, JD_time_mid_transit_norm_prior, JD_time_mid_transit_fixed, &
-Albedo, RV_zero_offset_prior, RV_zero_offset_end, RV_zero_offset_begin, RV_zero_offset_interval, &
-RV_zero_offset_1sigerr, RV_zero_offset_norm_prior, RV_zero_offset_fixed, RV_offset_datasets_prior, RV_offset_datasets_end, &
-RV_offset_datasets_begin, RV_offset_datasets_interval, RV_offset_datasets_1sigerr, RV_offset_datasets_norm_prior, RV_offset_datasets_fixed, &
+use_Rp_Rs_ratio, vmacro_prior, vmacro_end, vmacro_begin, vmacro_1sigerr, &
+vmacro_norm_prior, vmacro_fixed, beta_rot, M_pixels, linear_quadratic, &
+u, q_1_prior, q_1_end, q_1_begin, q_1_1sigerr, & 
+q_2_prior, q_2_end, q_2_begin, q_2_1sigerr, q_norm_prior, &
+q_fixed, Inc_prior, Inc_end, Inc_begin, Inc_1sigerr, &
+Inc_norm_prior, Inc_fixed, omega_arg_periastron_prior, omega_arg_periastron_end, omega_arg_periastron_begin, &
+omega_arg_periastron_1sigerr, omega_arg_periastron_norm_prior, omega_arg_periastron_fixed, Ecc_prior, Ecc_end, &
+Ecc_begin, Ecc_1sigerr, Ecc_norm_prior, Ecc_fixed, Mp_prior, &
+Mp_end, Mp_begin, Mp_1sigerr, Mp_norm_prior, Mp_fixed, &
+Rp_prior, Rp_end, Rp_begin, Rp_1sigerr, Rp_norm_prior, &
+Rp_fixed, Orbital_period_prior, Orbital_period_end, Orbital_period_begin, Orbital_period_1sigerr, &
+Orbital_period_norm_prior, Orbital_period_fixed, JD_time_mid_transit_prior, JD_time_mid_transit_end, JD_time_mid_transit_begin, &
+JD_time_mid_transit_1sigerr, JD_time_mid_transit_norm_prior, JD_time_mid_transit_fixed, Albedo, RV_zero_offset_prior, &
+RV_zero_offset_end, RV_zero_offset_begin, RV_zero_offset_interval, RV_zero_offset_1sigerr, RV_zero_offset_norm_prior, &
+RV_zero_offset_fixed, RV_offset_datasets_prior, RV_offset_datasets_end, RV_offset_datasets_begin, RV_offset_datasets_interval, &
+RV_offset_datasets_1sigerr, RV_offset_datasets_norm_prior, RV_offset_datasets_fixed, K_amp_prior, K_amp_end, &
+K_amp_begin, K_amp_1sigerr, K_amp_norm_prior, K_amp_fixed, use_K_amp, &
+
+Impact_prior, Impact_end, Impact_begin, Impact_1sigerr, Impact_norm_prior, &
+Impact_fixed, use_Impact, Rorb_Rs_prior, Rorb_Rs_end, Rorb_Rs_begin, &
+Rorb_Rs_1sigerr, Rorb_Rs_norm_prior, Rorb_Rs_fixed, use_Rorb_Rs_ratio, &
+
 vsini_prior, vsini_end, vsini_begin, vsini_1sigerr, vsini_norm_prior, &
 impose_prior_vsini, vsini_fixed, stellar_rotation_angle_prior, stellar_rotation_angle_end, stellar_rotation_angle_begin, &
 stellar_rotation_angle_1sigerr, stellar_rotation_angle_norm_prior, impose_prior_stellar_rotation_angle, stellar_rotation_angle_fixed, mcmc_accepted_iteration_size, &
@@ -689,19 +845,28 @@ number_mcmc_walkers, scale_factor_in, chi_squared_change, chi_squared_change_fit
           F50.5, /, A1, /, A1, /, F50.5, /, F50.5, /, &
           F50.5, /, F50.5, /, A1, /, A1, /, F50.5, /, &
           F50.5, /, F50.5, /, F50.5, /, A1, /, A1, /, &
-          A1, /, F50.5, /, F50.5, /, I20, /, A1, /, &
+          A1, /, F50.5, /, F50.5, /, F50.5, /, F50.5, /, &
+          A1, /, A1, /, F50.5, /, I20, /, A1, /, &
           F50.5, /, F50.5, /, F50.5, /, F50.5, /, F50.5, /, &
-          F50.5, /, F50.5, /, A1, /, A1, /, F50.5, /, &
-          F50.5, /, F50.5, /, F50.5, /, A1, /, A1, /, &
           F50.5, /, F50.5, /, F50.5, /, F50.5, /, A1, /, &
           A1, /, F50.5, /, F50.5, /, F50.5, /, F50.5, /, &
           A1, /, A1, /, F50.5, /, F50.5, /, F50.5, /, &
-          F50.5, /, A1, /, A1, /, F50.10, /, F50.10, /, &
-          F50.10, /, F50.10, /, A1, /, A1, /, F50.10, /, &
-          F50.10, /, F50.10, /, F50.10, /, A1, /, A1, /, &
-          F50.5, /, F50.5, /, F50.5, /, F50.5, /, F50.5, /, &
           F50.5, /, A1, /, A1, /, F50.5, /, F50.5, /, &
+          F50.5, /, F50.5, /, A1, /, A1, /, F50.5, /, &
           F50.5, /, F50.5, /, F50.5, /, A1, /, A1, /, &
+          F50.5, /, F50.5, /, F50.5, /, F50.5, /, A1, /, &
+          A1, /, F50.10, /, F50.10, /, F50.10, /, F50.10, /, &
+          A1, /, A1, /, F50.10, /, F50.10, /, F50.10, /, &
+          F50.10, /, A1, /, A1, /, F50.5, /, F50.5, /, &
+          F50.5, /, F50.5, /, F50.5, /, F50.5, /, A1, /, &
+          A1, /, F50.5, /, F50.5, /, F50.5, /, F50.5, /, &
+          F50.5, /, A1, /, A1, /, F50.5, /, F50.5, /, &
+          F50.5, /, F50.5, /, A1, /, A1, /, A1, /, &
+          
+          F50.5, /, F50.5, /, F50.5, /, F50.5, /, A1, /, &
+          A1, /, A1, /, F50.5, /, F50.5, /, F50.5, /, &
+          F50.5, /, A1, /, A1, /, A1, /, &
+          
           F50.5, /, F50.5, /, F50.5, /, F50.5, /, A1, /, &
           A1, /, A1, /, F50.5, /, F50.5, /, F50.5, /, &
           F50.5, /, A1, /, A1, /, A1, /, I20, /, &
@@ -781,6 +946,18 @@ output_Inc_MCMC_array_filename = TRIM(TRIM(output_temp_data) // 'Inc_MCMC_array.
 output_Inc_all_array_filename = TRIM(TRIM(output_temp_data) // 'Inc_all_array.txt')
 output_omega_arg_periastron_MCMC_array_filename = TRIM(TRIM(output_temp_data) // 'omega_arg_periastron_MCMC_array.txt')
 output_omega_arg_periastron_all_array_filename = TRIM(TRIM(output_temp_data) // 'omega_arg_periastron_all_array.txt')
+output_vmacro_MCMC_array_filename = TRIM(TRIM(output_temp_data) // 'vmacro_MCMC_array.txt')
+output_vmacro_all_array_filename = TRIM(TRIM(output_temp_data) // 'vmacro_all_array.txt')
+output_q_1_MCMC_array_filename = TRIM(TRIM(output_temp_data) // 'q_1_MCMC_array.txt')
+output_q_1_all_array_filename = TRIM(TRIM(output_temp_data) // 'q_1_all_array.txt')
+output_q_2_MCMC_array_filename = TRIM(TRIM(output_temp_data) // 'q_2_MCMC_array.txt')
+output_q_2_all_array_filename = TRIM(TRIM(output_temp_data) // 'q_2_all_array.txt')
+output_K_amp_MCMC_array_filename = TRIM(TRIM(output_temp_data) // 'K_amp_MCMC_array.txt')
+output_K_amp_all_array_filename = TRIM(TRIM(output_temp_data) // 'K_amp_all_array.txt')
+output_Impact_MCMC_array_filename = TRIM(TRIM(output_temp_data) // 'Impact_MCMC_array.txt')
+output_Impact_all_array_filename = TRIM(TRIM(output_temp_data) // 'Impact_all_array.txt')
+output_Rorb_Rs_MCMC_array_filename = TRIM(TRIM(output_temp_data) // 'Rorb_Rs_MCMC_array.txt')
+output_Rorb_Rs_all_array_filename = TRIM(TRIM(output_temp_data) // 'Rorb_Rs_all_array.txt')
 output_MCMC_properties_filename = TRIM(TRIM(output_temp_data) // 'MCMC_properties.txt')
 output_best_param_chi_squared_filename = TRIM(TRIM(output_temp_data) // 'best_param_chi_squared.txt')
 output_best_param_mean_filename = TRIM(TRIM(output_temp_data) // 'best_param_mean.txt')
@@ -825,7 +1002,8 @@ END IF
 e = 1
 k = 1
 
-vturb = SQRT(beta_rot**2.0D0 + vmacro**2.0D0)            !Velocity width of spectral line due to mechanisms other than rotation (i.e. micro and macro turbulence).
+
+
 
 total_interval = datafilelength
 
@@ -854,8 +1032,21 @@ Allocate(Inc_accept_mcmc_array(NINT(mcmc_accepted_iteration_size/0.05D0), number
 Allocate(Inc_all_mcmc_array(NINT(mcmc_accepted_iteration_size/0.05D0), number_mcmc_walkers))
 Allocate(omega_arg_periastron_accept_mcmc_array(NINT(mcmc_accepted_iteration_size/0.05D0), number_mcmc_walkers))
 Allocate(omega_arg_periastron_all_mcmc_array(NINT(mcmc_accepted_iteration_size/0.05D0), number_mcmc_walkers))
+Allocate(omega_arg_periastron_sorted_array(NINT(mcmc_accepted_iteration_size/0.05D0), number_mcmc_walkers))
 Allocate(RV_zero_offset_accept_mcmc_array(NINT(mcmc_accepted_iteration_size/0.05D0), number_mcmc_walkers))
 Allocate(RV_zero_offset_all_mcmc_array(NINT(mcmc_accepted_iteration_size/0.05D0), number_mcmc_walkers))
+Allocate(vmacro_accept_mcmc_array(NINT(mcmc_accepted_iteration_size/0.05D0), number_mcmc_walkers))
+Allocate(vmacro_all_mcmc_array(NINT(mcmc_accepted_iteration_size/0.05D0), number_mcmc_walkers))
+Allocate(q_1_accept_mcmc_array(NINT(mcmc_accepted_iteration_size/0.05D0), number_mcmc_walkers))
+Allocate(q_1_all_mcmc_array(NINT(mcmc_accepted_iteration_size/0.05D0), number_mcmc_walkers))
+Allocate(q_2_accept_mcmc_array(NINT(mcmc_accepted_iteration_size/0.05D0), number_mcmc_walkers))
+Allocate(q_2_all_mcmc_array(NINT(mcmc_accepted_iteration_size/0.05D0), number_mcmc_walkers))
+Allocate(K_amp_accept_mcmc_array(NINT(mcmc_accepted_iteration_size/0.05D0), number_mcmc_walkers))
+Allocate(K_amp_all_mcmc_array(NINT(mcmc_accepted_iteration_size/0.05D0), number_mcmc_walkers))
+Allocate(Impact_accept_mcmc_array(NINT(mcmc_accepted_iteration_size/0.05D0), number_mcmc_walkers))
+Allocate(Impact_all_mcmc_array(NINT(mcmc_accepted_iteration_size/0.05D0), number_mcmc_walkers))
+Allocate(Rorb_Rs_accept_mcmc_array(NINT(mcmc_accepted_iteration_size/0.05D0), number_mcmc_walkers))
+Allocate(Rorb_Rs_all_mcmc_array(NINT(mcmc_accepted_iteration_size/0.05D0), number_mcmc_walkers))
 
 Allocate(vsini_accept_mcmc_array(NINT(mcmc_accepted_iteration_size/0.05D0), number_mcmc_walkers))
 Allocate(vsini_all_mcmc_array(NINT(mcmc_accepted_iteration_size/0.05D0), number_mcmc_walkers))
@@ -871,8 +1062,8 @@ Allocate(stellar_rotation_angle_variance_MCMC_array(NINT(mcmc_accepted_iteration
 Allocate(stellar_rotation_angle_stand_dev_current_array(NINT(mcmc_accepted_iteration_size/0.05D0), number_mcmc_walkers))
 Allocate(stellar_rotation_angle_stand_dev_MCMC_array(NINT(mcmc_accepted_iteration_size/0.05D0), number_mcmc_walkers))
 Allocate(walker_parameter_array(5, number_mcmc_walkers))
-Allocate(walker_parameter_array_chi2(14, number_mcmc_walkers), walker_parameter_array_mean(14, number_mcmc_walkers))
-Allocate(walker_parameter_array_variance(14, number_mcmc_walkers), walker_parameter_array_stand_dev(14, number_mcmc_walkers))
+Allocate(walker_parameter_array_chi2(20, number_mcmc_walkers), walker_parameter_array_mean(20, number_mcmc_walkers))
+Allocate(walker_parameter_array_variance(20, number_mcmc_walkers), walker_parameter_array_stand_dev(20, number_mcmc_walkers))
 Allocate(mask_array(NINT(mcmc_accepted_iteration_size/0.05D0), number_mcmc_walkers))
 
 Allocate(RV_offset_datasets_sum2(number_mcmc_walkers))
@@ -889,6 +1080,12 @@ Allocate(Inc_sum2(number_mcmc_walkers))
 Allocate(omega_arg_periastron_sum2(number_mcmc_walkers))
 Allocate(vsini_sum2(number_mcmc_walkers))
 Allocate(stellar_rotation_angle_sum2(number_mcmc_walkers))
+Allocate(vmacro_sum2(number_mcmc_walkers))
+Allocate(q_1_sum2(number_mcmc_walkers))
+Allocate(q_2_sum2(number_mcmc_walkers))
+Allocate(K_amp_sum2(number_mcmc_walkers))
+Allocate(Impact_sum2(number_mcmc_walkers))
+Allocate(Rorb_Rs_sum2(number_mcmc_walkers))
 
 Allocate(Chi_squared_array_MCMC(NINT(mcmc_accepted_iteration_size/0.05D0), number_mcmc_walkers))
 Allocate(Reduced_Chi_Squared_array_MCMC(NINT(mcmc_accepted_iteration_size/0.05D0), number_mcmc_walkers))
@@ -913,6 +1110,13 @@ Allocate(normal11(NINT(mcmc_accepted_iteration_size/0.05D0), number_mcmc_walkers
 Allocate(normal12(NINT(mcmc_accepted_iteration_size/0.05D0), number_mcmc_walkers))
 Allocate(normal13(NINT(mcmc_accepted_iteration_size/0.05D0), number_mcmc_walkers))
 Allocate(normal14(NINT(mcmc_accepted_iteration_size/0.05D0), number_mcmc_walkers))
+Allocate(normal15(NINT(mcmc_accepted_iteration_size/0.05D0), number_mcmc_walkers))
+Allocate(normal16(NINT(mcmc_accepted_iteration_size/0.05D0), number_mcmc_walkers))
+Allocate(normal17(NINT(mcmc_accepted_iteration_size/0.05D0), number_mcmc_walkers))
+Allocate(normal18(NINT(mcmc_accepted_iteration_size/0.05D0), number_mcmc_walkers))
+Allocate(normal19(NINT(mcmc_accepted_iteration_size/0.05D0), number_mcmc_walkers))
+Allocate(normal20(NINT(mcmc_accepted_iteration_size/0.05D0), number_mcmc_walkers))
+
 Allocate(random_draw_array(NINT(mcmc_accepted_iteration_size/0.05D0), number_mcmc_walkers))
 
 Allocate(spread_rand_RV_offset(NINT(mcmc_accepted_iteration_size/0.05D0), number_mcmc_walkers))
@@ -929,6 +1133,12 @@ Allocate(spread_rand_omega(NINT(mcmc_accepted_iteration_size/0.05D0), number_mcm
 Allocate(spread_rand_RV_zero(NINT(mcmc_accepted_iteration_size/0.05D0), number_mcmc_walkers))
 Allocate(spread_rand_vsini(NINT(mcmc_accepted_iteration_size/0.05D0), number_mcmc_walkers))
 Allocate(spread_rand_spin_orbit(NINT(mcmc_accepted_iteration_size/0.05D0), number_mcmc_walkers))
+Allocate(spread_rand_vmacro(NINT(mcmc_accepted_iteration_size/0.05D0), number_mcmc_walkers))
+Allocate(spread_rand_q_1(NINT(mcmc_accepted_iteration_size/0.05D0), number_mcmc_walkers))
+Allocate(spread_rand_q_2(NINT(mcmc_accepted_iteration_size/0.05D0), number_mcmc_walkers))
+Allocate(spread_rand_K_amp(NINT(mcmc_accepted_iteration_size/0.05D0), number_mcmc_walkers))
+Allocate(spread_rand_Impact(NINT(mcmc_accepted_iteration_size/0.05D0), number_mcmc_walkers))
+Allocate(spread_rand_Rorb_Rs(NINT(mcmc_accepted_iteration_size/0.05D0), number_mcmc_walkers))
 
 Allocate(scale_factor_array(NINT(mcmc_accepted_iteration_size/0.05D0), number_mcmc_walkers))
 
@@ -945,21 +1155,43 @@ call system_clock(system_time_it2)
 
 mask_array(1:NINT(mcmc_accepted_iteration_size/0.05D0), 1:number_mcmc_walkers) = .FALSE.
 
-Rs = Rss * Rs_solar_prior
-Ms = Mss * Ms_solar_prior 
 
-Rs2 = Rs**2.0D0                              !Square the radius of star to speed up calculations.
 
-IF (linear_quadratic == 'q') THEN
-   Io = 6.0D0 / (pi*Rs2*(6.0D0 - (2.0D0*q_1) - q_2))     !The initial light intensity equation with limb darkening (quadratic)
+
+Ms = Mss * Ms_solar_prior
+
+radius_ratio_prior = Rp_Rs_ratio_prior
+
+IF ((use_impact == 'Y') .AND. (use_Rorb_Rs_ratio == 'Y')) THEN
+    Inc_prior = acos((impact_prior/(Rorb_Rs_prior))*((1.0D0 + (Ecc_prior*sin(omega_arg_periastron_prior*(pi/180.0D0))))/(1.0D0 - Ecc_prior**2.0D0)))*(180.0D0/pi)
+    Transit_length_prior = ((Orbital_period_prior*day_sec)/pi) * asin((1.0D0/Rorb_Rs_prior)*(sqrt((1.0D0 + radius_ratio_prior)**2.0D0 - impact_prior**2.0D0)/sin(Inc_prior*(pi/180.0D0)))) * &
+                           (sqrt(1.0D0 - Ecc_prior**2.0D0)/(1.0D0 + (Ecc_prior*sin(omega_arg_periastron_prior*(pi/180.0D0)))))
+END IF
+
+IF ((use_K_amp == 'Y') .AND. (Mp_fixed == 'Y') .AND. (Ecc == 0)) THEN
+    Mp = ((Orbital_period_prior*day_sec)/(2.0D0*pi*G))**(1.0D0/3.0D0)*((Ms**(2.0D0/3.0D0)*K_amp_prior)/sin(Inc_prior*(pi/180.0D0)))
 ELSE
-   Io = 1.0D0 / (pi*Rs2*(1.0D0-(u/3.0D0)))      !The initial light intensity equation with limb darkening (linear)
-                                                !(normalize Io such that total star luminosity is 1). 
+    IF (Jupiter_Earth_units == 'Y') THEN
+        Mp = Mp_prior*Mj
+    END IF
+
+    IF (Jupiter_Earth_units == 'N') THEN
+        Mp = Mp_prior*Me
+    END IF
+END IF
+
+Rorb_prior = (((Orbital_period_prior*day_sec)**2.0d0*G*(Ms + Mp))/(4.0d0*pi**2.0d0))**(1.0d0/3.0d0)     !Semi-major axis.
+Rorb_star_prior = (((Orbital_period_prior*day_sec)**2.0D0*G*((Mp**(3.0D0))/(Ms + Mp)**(2.0D0)))/(4.0d0*pi**2.0D0))**(1.0d0/3.0d0)     !Semi-major of stellar axis.
+
+IF (use_Rorb_Rs_ratio == 'Y') THEN
+    Rs = Rorb_prior/(Rorb_Rs_prior)
+ELSE
+    Rs = Rss * Rs_solar_prior
 END IF
 
 !Based on given priors, determine the approximate time in the simulation to start and finish comparing RV's with model.
 IF (use_Rp_Rs_ratio == 'Y') THEN
-    Rp = Rp_Rs_ratio_prior * (Rs_solar_prior * Rss)
+    Rp = Rp_Rs_ratio_prior * (Rs)
 ELSE
     IF (Jupiter_Earth_units == 'Y') THEN
         Rp = Rp_prior*Rj
@@ -970,20 +1202,24 @@ ELSE
     END IF
 END IF
 
-IF (Jupiter_Earth_units == 'Y') THEN
-    Mp = Mp_prior*Mj
+Rs2 = Rs**2.0D0                              !Square the radius of star to speed up calculations.
+
+IF (linear_quadratic == 'q') THEN
+   Io = 6.0D0 / (pi*Rs2*(6.0D0 - (2.0D0*q_1_prior) - q_2_prior))     !The initial light intensity equation with limb darkening (quadratic)
+ELSE
+   Io = 1.0D0 / (pi*Rs2*(1.0D0-(u/3.0D0)))      !The initial light intensity equation with limb darkening (linear)
+                                                !(normalize Io such that total star luminosity is 1). 
 END IF
 
-IF (Jupiter_Earth_units == 'N') THEN
-    Mp = Mp_prior*Me
+IF ((use_impact == 'N') .OR. (use_Rorb_Rs_ratio == 'N')) THEN
+    impact_prior = ((Rorb_prior*cos(Inc_prior*(pi/180.0D0)))/Rs)*((1.0D0 - Ecc_prior**2.0D0)/(1.0D0 + (Ecc_prior*sin(omega_arg_periastron_prior*(pi/180.0D0)))))
+    Transit_length_prior = ((Orbital_period_prior*day_sec)/pi) * asin((Rs/Rorb_prior)*(sqrt((1.0D0 + radius_ratio_prior)**2.0D0 - impact_prior**2.0D0)/sin(Inc_prior*(pi/180.0D0)))) * &
+                           (sqrt(1.0D0 - Ecc_prior**2.0D0)/(1.0D0 + (Ecc_prior*sin(omega_arg_periastron_prior*(pi/180.0D0)))))
 END IF
 
-Rorb_prior = (((Orbital_period_prior*day_sec)**2.0d0*G*(Ms + Mp))/(4.0d0*pi**2.0d0))**(1.0d0/3.0d0)     !Semi-major axis.
-Rorb_star_prior = (((Orbital_period_prior*day_sec)**2.0D0*G*((Mp**(3.0D0))/(Ms + Mp)**(2.0D0)))/(4.0d0*pi**2.0D0))**(1.0d0/3.0d0)     !Semi-major of stellar axis.
-radius_ratio_prior = Rp_Rs_ratio_prior
-impact_prior = ((Rorb_prior*cos(Inc_prior*(pi/180.0D0)))/Rs)*((1.0D0 - Ecc_prior**2.0D0)/(1.0D0 + (Ecc_prior*sin(omega_arg_periastron_prior*(pi/180.0D0)))))
-Transit_length_prior = ((Orbital_period_prior*day_sec)/pi) * asin((Rs/Rorb_prior)*(sqrt((1.0D0 + radius_ratio_prior)**2.0D0 - impact_prior**2.0D0)/sin(Inc_prior*(pi/180.0D0)))) * &
-                       (sqrt(1.0D0 - Ecc_prior**2.0D0)/(1.0D0 + (Ecc_prior*sin(omega_arg_periastron_prior*(pi/180.0D0)))))
+
+
+                       
 PRINT *, "Orbital_period_prior: ", Orbital_period_prior
 PRINT *, "Orbital_period_prior * day_sec: ", Orbital_period_prior*day_sec
 PRINT *, "Rorb_prior: ", Rorb_prior
@@ -995,6 +1231,10 @@ PRINT *, "Ecc_prior: ", Ecc_prior
 PRINT *, "omega_arg_periastron_prior: ", omega_arg_periastron_prior
 PRINT *, "vsini_prior: ", vsini_prior
 PRINT *, "stellar_rotation_angle_prior: ", stellar_rotation_angle_prior
+PRINT *, "vmacro_prior: ", vmacro_prior
+PRINT *, "q_1_prior: ", q_1_prior
+PRINT *, "q_2_prior: ", q_2_prior
+PRINT *, "K_amp_prior: ", K_amp_prior
 PRINT *, "Rs: ", Rs
 PRINT *, "Impact parameter prior: ", impact_prior
 PRINT *, "Radius ratio prior: ", radius_ratio_prior
@@ -1061,6 +1301,26 @@ IF (Rp_Rs_ratio_fixed == 'N') THEN
     Number_fit = Number_fit + 1
 END IF
 
+IF (vmacro_fixed == 'N') THEN
+    Number_fit = Number_fit + 1
+END IF
+
+IF (q_fixed == 'N') THEN
+    Number_fit = Number_fit + 1
+END IF
+
+IF (K_amp_fixed == 'N') THEN
+    Number_fit = Number_fit + 1
+END IF
+
+IF (Impact_fixed == 'N') THEN
+    Number_fit = Number_fit + 1
+END IF
+
+IF (Rorb_Rs_fixed == 'N') THEN
+    Number_fit = Number_fit + 2
+END IF
+
 
 
 
@@ -1074,7 +1334,7 @@ DO i = 1, number_mcmc_walkers
         IF ((RV_offset_datasets_fixed == 'N') .AND. (RV_offset_datasets_norm_prior == 'Y')) THEN
             normal1(j,i) = normal(0.0D0, 1.0D0)
         ELSE IF ((RV_offset_datasets_fixed == 'N') .AND. (RV_offset_datasets_norm_prior == 'N')) THEN
-            IF (j ==1) THEN
+            IF (j == 1) THEN
                 spread_rand_RV_offset(j,i) = spread_rand(RV_offset_datasets_begin,RV_offset_datasets_end)
             ELSE
                 spread_rand_RV_offset(j,i) = (ran1() - 0.5D0) * abs(RV_offset_datasets_begin - RV_offset_datasets_end)
@@ -1084,7 +1344,7 @@ DO i = 1, number_mcmc_walkers
         IF ((Orbital_period_fixed == 'N') .AND. (Orbital_period_norm_prior == 'Y')) THEN
             normal2(j,i) = normal(0.0D0, 1.0D0)
         ELSE IF ((Orbital_period_fixed == 'N') .AND. (Orbital_period_norm_prior == 'N')) THEN
-            IF (j ==1) THEN
+            IF (j == 1) THEN
                 spread_rand_Orbital_period(j,i) = spread_rand(Orbital_period_begin,Orbital_period_end)
             ELSE
                 spread_rand_Orbital_period(j,i) = (ran1() - 0.5D0) * abs(Orbital_period_begin - Orbital_period_end)
@@ -1094,7 +1354,7 @@ DO i = 1, number_mcmc_walkers
         IF ((JD_time_mid_transit_fixed == 'N') .AND. (JD_time_mid_transit_norm_prior == 'Y')) THEN
             normal3(j,i) = normal(0.0D0, 1.0D0)
         ELSE IF ((JD_time_mid_transit_fixed == 'N') .AND. (JD_time_mid_transit_norm_prior == 'N')) THEN
-            IF (j ==1) THEN
+            IF (j == 1) THEN
                 spread_rand_JD(j,i) = spread_rand(JD_time_mid_transit_begin,JD_time_mid_transit_end)
             ELSE
                 spread_rand_JD(j,i) = (ran1() - 0.5D0) * abs(JD_time_mid_transit_begin - JD_time_mid_transit_end)
@@ -1104,7 +1364,7 @@ DO i = 1, number_mcmc_walkers
         IF ((Mp_fixed == 'N') .AND. (Mp_norm_prior == 'Y')) THEN
             normal4(j,i) = normal(0.0D0, 1.0D0)
         ELSE IF ((Mp_fixed == 'N') .AND. (Mp_norm_prior == 'N')) THEN
-            IF (j ==1) THEN
+            IF (j == 1) THEN
                 spread_rand_Mp(j,i) = spread_rand(Mp_begin,Mp_end)
             ELSE
                 spread_rand_Mp(j,i) = (ran1() - 0.5D0) * abs(Mp_begin - Mp_end)
@@ -1114,7 +1374,7 @@ DO i = 1, number_mcmc_walkers
         IF ((Rp_fixed == 'N') .AND. (Rp_norm_prior == 'Y')) THEN
             normal5(j,i) = normal(0.0D0, 1.0D0)
         ELSE IF ((Rp_fixed == 'N') .AND. (Rp_norm_prior == 'N')) THEN
-            IF (j ==1) THEN
+            IF (j == 1) THEN
                 spread_rand_Rp(j,i) = spread_rand(Rp_begin,Rp_end)
             ELSE
                 spread_rand_Rp(j,i) = (ran1() - 0.5D0) * abs(Rp_begin - Rp_end)
@@ -1124,7 +1384,7 @@ DO i = 1, number_mcmc_walkers
         IF ((Rp_Rs_ratio_fixed == 'N') .AND. (Rp_Rs_ratio_norm_prior == 'Y')) THEN
             normal6(j,i) = normal(0.0D0, 1.0D0)
         ELSE IF ((Rp_Rs_ratio_fixed == 'N') .AND. (Rp_Rs_ratio_norm_prior == 'N')) THEN
-            IF (j ==1) THEN
+            IF (j == 1) THEN
                 spread_rand_Rp_Rs_ratio(j,i) = spread_rand(Rp_Rs_ratio_begin,Rp_Rs_ratio_end)
             ELSE
                 spread_rand_Rp_Rs_ratio(j,i) = (ran1() - 0.5D0) * abs(Rp_Rs_ratio_begin - Rp_Rs_ratio_end)
@@ -1134,7 +1394,7 @@ DO i = 1, number_mcmc_walkers
         IF ((Rs_solar_fixed == 'N') .AND. (Rs_solar_norm_prior == 'Y')) THEN
             normal7(j,i) = normal(0.0D0, 1.0D0)
         ELSE IF ((Rs_solar_fixed == 'N') .AND. (Rs_solar_norm_prior == 'N')) THEN
-            IF (j ==1) THEN
+            IF (j == 1) THEN
                 spread_rand_Rs(j,i) = spread_rand(Rs_solar_begin,Rs_solar_end)
             ELSE
                 spread_rand_Rs(j,i) = (ran1() - 0.5D0) * abs(Rs_solar_begin - Rs_solar_end)
@@ -1144,7 +1404,7 @@ DO i = 1, number_mcmc_walkers
         IF ((Ms_solar_fixed == 'N') .AND. (Ms_solar_norm_prior == 'Y')) THEN
             normal8(j,i) = normal(0.0D0, 1.0D0)
         ELSE IF ((Ms_solar_fixed == 'N') .AND. (Ms_solar_norm_prior == 'N')) THEN
-            IF (j ==1) THEN
+            IF (j == 1) THEN
                 spread_rand_Ms(j,i) = spread_rand(Ms_solar_begin,Ms_solar_end)
             ELSE
                 spread_rand_Ms(j,i) = (ran1() - 0.5D0) * abs(Ms_solar_begin - Ms_solar_end)
@@ -1154,7 +1414,7 @@ DO i = 1, number_mcmc_walkers
         IF ((Ecc_fixed == 'N') .AND. (Ecc_norm_prior == 'Y')) THEN
             normal9(j,i) = normal(0.0D0, 1.0D0)
         ELSE IF ((Ecc_fixed == 'N') .AND. (Ecc_norm_prior == 'N')) THEN
-            IF (j ==1) THEN
+            IF (j == 1) THEN
                 spread_rand_Ecc(j,i) = spread_rand(Ecc_begin,Ecc_end)
             ELSE
                 spread_rand_Ecc(j,i) = (ran1() - 0.5D0) * abs(Ecc_begin - Ecc_end)
@@ -1164,7 +1424,7 @@ DO i = 1, number_mcmc_walkers
         IF ((Inc_fixed == 'N') .AND. (Inc_norm_prior == 'Y')) THEN
             normal10(j,i) = normal(0.0D0, 1.0D0)
         ELSE IF ((Inc_fixed == 'N') .AND. (Inc_norm_prior == 'N')) THEN
-            IF (j ==1) THEN
+            IF (j == 1) THEN
                 spread_rand_Inc(j,i) = spread_rand(Inc_begin,Inc_end)
             ELSE
                 spread_rand_Inc(j,i) = (ran1() - 0.5D0) * abs(Inc_begin - Inc_end)
@@ -1174,7 +1434,7 @@ DO i = 1, number_mcmc_walkers
         IF ((omega_arg_periastron_fixed == 'N') .AND. (omega_arg_periastron_norm_prior == 'Y')) THEN
             normal11(j,i) = normal(0.0D0, 1.0D0)
         ELSE IF ((omega_arg_periastron_fixed == 'N') .AND. (omega_arg_periastron_norm_prior == 'N')) THEN
-            IF (j ==1) THEN
+            IF (j == 1) THEN
                 spread_rand_omega(j,i) = spread_rand(omega_arg_periastron_begin,omega_arg_periastron_end)
             ELSE
                 spread_rand_omega(j,i) = (ran1() - 0.5D0) * abs(omega_arg_periastron_begin - omega_arg_periastron_end)
@@ -1184,7 +1444,7 @@ DO i = 1, number_mcmc_walkers
         IF ((RV_zero_offset_fixed == 'N') .AND. (RV_zero_offset_norm_prior == 'Y')) THEN
             normal12(j,i) = normal(0.0D0, 1.0D0)
         ELSE IF ((RV_zero_offset_fixed == 'N') .AND. (RV_zero_offset_norm_prior == 'N')) THEN
-            IF (j ==1) THEN
+            IF (j == 1) THEN
                 spread_rand_RV_zero(j,i) = spread_rand(RV_zero_offset_begin,RV_zero_offset_end)
             ELSE
                 spread_rand_RV_zero(j,i) = (ran1() - 0.5D0) * abs(RV_zero_offset_begin - RV_zero_offset_end)
@@ -1194,7 +1454,7 @@ DO i = 1, number_mcmc_walkers
         IF ((vsini_fixed == 'N') .AND. (vsini_norm_prior == 'Y')) THEN
             normal13(j,i) = normal(0.0D0, 1.0D0)
         ELSE IF ((vsini_fixed == 'N') .AND. (vsini_norm_prior == 'N')) THEN
-            IF (j ==1) THEN
+            IF (j == 1) THEN
                 spread_rand_vsini(j,i) = spread_rand(vsini_begin,vsini_end)
             ELSE
                 spread_rand_vsini(j,i) = (ran1() - 0.5D0) * abs(vsini_begin - vsini_end)
@@ -1204,12 +1464,68 @@ DO i = 1, number_mcmc_walkers
         IF ((stellar_rotation_angle_fixed == 'N') .AND. (stellar_rotation_angle_norm_prior == 'Y')) THEN
             normal14(j,i) = normal(0.0D0, 1.0D0)
         ELSE IF ((stellar_rotation_angle_fixed == 'N') .AND. (stellar_rotation_angle_norm_prior == 'N')) THEN
-            IF (j ==1) THEN
+            IF (j == 1) THEN
                 spread_rand_spin_orbit(j,i) = spread_rand(stellar_rotation_angle_begin,stellar_rotation_angle_end)
             ELSE
                 spread_rand_spin_orbit(j,i) = (ran1() - 0.5D0) * abs(stellar_rotation_angle_begin - stellar_rotation_angle_end)
             END IF
         END IF
+        
+        IF ((vmacro_fixed == 'N') .AND. (vmacro_norm_prior == 'Y')) THEN
+            normal15(j,i) = normal(0.0D0, 1.0D0)
+        ELSE IF ((vmacro_fixed == 'N') .AND. (vmacro_norm_prior == 'N')) THEN
+            IF (j == 1) THEN
+                spread_rand_vmacro(j,i) = spread_rand(vmacro_begin,vmacro_end)
+            ELSE
+                spread_rand_vmacro(j,i) = (ran1() - 0.5D0) * abs(vmacro_begin - vmacro_end)
+            END IF
+        END IF
+        
+        IF ((q_fixed == 'N') .AND. (q_norm_prior == 'Y')) THEN
+            normal16(j,i) = normal(0.0D0, 1.0D0)
+            normal17(j,i) = normal(0.0D0, 1.0D0)
+        ELSE IF ((q_fixed == 'N') .AND. (q_norm_prior == 'N')) THEN
+            IF (j == 1) THEN
+                spread_rand_q_1(j,i) = spread_rand(q_1_begin,q_1_end)
+                spread_rand_q_2(j,i) = spread_rand(q_2_begin,q_2_end)
+            ELSE
+                spread_rand_q_1(j,i) = (ran1() - 0.5D0) * abs(q_1_begin - q_1_end)
+                spread_rand_q_2(j,i) = (ran1() - 0.5D0) * abs(q_2_begin - q_2_end)
+            END IF
+        END IF
+        
+        IF ((K_amp_fixed == 'N') .AND. (K_amp_norm_prior == 'Y')) THEN
+            normal18(j,i) = normal(0.0D0, 1.0D0)
+        ELSE IF ((K_amp_fixed == 'N') .AND. (K_amp_norm_prior == 'N')) THEN
+            IF (j == 1) THEN
+                spread_rand_K_amp(j,i) = spread_rand(K_amp_begin,K_amp_end)
+            ELSE
+                spread_rand_K_amp(j,i) = (ran1() - 0.5D0) * abs(K_amp_begin - K_amp_end)
+            END IF
+        END IF
+        
+        IF ((Impact_fixed == 'N') .AND. (Impact_norm_prior == 'Y')) THEN
+            normal19(j,i) = normal(0.0D0, 1.0D0)
+        ELSE IF ((Impact_fixed == 'N') .AND. (Impact_norm_prior == 'N')) THEN
+            IF (j == 1) THEN
+                spread_rand_Impact(j,i) = spread_rand(Impact_begin,Impact_end)
+            ELSE
+                spread_rand_Impact(j,i) = (ran1() - 0.5D0) * abs(Impact_begin - Impact_end)
+            END IF
+        END IF
+        
+        IF ((Rorb_Rs_fixed == 'N') .AND. (Rorb_Rs_norm_prior == 'Y')) THEN
+            normal20(j,i) = normal(0.0D0, 1.0D0)
+        ELSE IF ((Rorb_Rs_fixed == 'N') .AND. (Rorb_Rs_norm_prior == 'N')) THEN
+            IF (j == 1) THEN
+                spread_rand_Rorb_Rs(j,i) = spread_rand(Rorb_Rs_begin,Rorb_Rs_end)
+            ELSE
+                spread_rand_Rorb_Rs(j,i) = (ran1() - 0.5D0) * abs(Rorb_Rs_begin - Rorb_Rs_end)
+            END IF
+        END IF
+        
+        
+        
         
         random_draw_array(j,i) = ran1()
         
@@ -1320,7 +1636,13 @@ DO CONCURRENT (walker = 1:number_mcmc_walkers)
     Inc_draw_loop = 1
     omega_arg_periastron_draw_loop = 1
     RV_zero_offset_draw_loop = 1
-    stellar_rotation_angle_draw_loop = 1
+    stellar_rotation_angle_draw_loop = 1 
+    vmacro_draw_loop = 1
+    q_1_draw_loop = 1
+    q_2_draw_loop = 1
+    K_amp_draw_loop = 1
+    Impact_draw_loop = 1
+    Rorb_Rs_draw_loop = 1
                          
     
     
@@ -1577,6 +1899,12 @@ DO CONCURRENT (walker = 1:number_mcmc_walkers)
                 omega_arg_periastron = omega_arg_periastron_prior
             ELSE IF ((omega_arg_periastron_fixed == 'N') .AND. (omega_arg_periastron_norm_prior == 'Y')) THEN
                 omega_arg_periastron = omega_arg_periastron_prior + (omega_arg_periastron_stand_dev_MCMC*scale_factor*normal11(all_loop, walker))
+                IF (omega_arg_periastron > 360.0D0) THEN
+                    omega_arg_periastron = 360.0D0 - omega_arg_periastron
+                END IF
+                IF (omega_arg_periastron < 0.0D0) THEN
+                    omega_arg_periastron = omega_arg_periastron + 360.0D0
+                END IF
             ELSE IF ((omega_arg_periastron_fixed == 'N') .AND. (omega_arg_periastron_norm_prior == 'N')) THEN
                 omega_arg_periastron = spread_rand_omega(all_loop, walker)
             END IF
@@ -1584,6 +1912,7 @@ DO CONCURRENT (walker = 1:number_mcmc_walkers)
             omega_arg_periastron_mean = omega_arg_periastron
             omega_arg_periastron_diff_mean_2 = 0.0D0
             omega_arg_periastron_accept_mcmc_array(all_loop, walker) = omega_arg_periastron
+            omega_arg_periastron_sorted_array(all_loop, walker) = omega_arg_periastron
             omega_arg_periastron_all_mcmc_array(all_loop, walker) = omega_arg_periastron
             
             
@@ -1598,7 +1927,7 @@ DO CONCURRENT (walker = 1:number_mcmc_walkers)
                 RV_zero_offset = RV_zero_offset_prior
             ELSE IF ((RV_zero_offset_fixed == 'N') .AND. (RV_zero_offset_norm_prior == 'Y')) THEN
                 RV_zero_offset = RV_zero_offset_prior + (RV_zero_offset_stand_dev_MCMC*scale_factor*normal12(all_loop, walker))
-            ELSE IF ((RV_zero_offset_fixed == 'N') .AND. (RV_zero_offset_norm_prior == 'Y')) THEN
+            ELSE IF ((RV_zero_offset_fixed == 'N') .AND. (RV_zero_offset_norm_prior == 'N')) THEN
                 RV_zero_offset = spread_rand_RV_zero(all_loop, walker)
             END IF
             RV_zero_offset_sum = RV_zero_offset
@@ -1606,6 +1935,132 @@ DO CONCURRENT (walker = 1:number_mcmc_walkers)
             RV_zero_offset_diff_mean_2 = 0.0D0
             RV_zero_offset_accept_mcmc_array(all_loop, walker) = RV_zero_offset
             RV_zero_offset_all_mcmc_array(all_loop, walker) = RV_zero_offset
+            
+            
+
+            
+            vmacro_variance = vmacro_1sigerr**2.0D0
+            vmacro_variance_MCMC = vmacro_1sigerr**2.0D0       !Update after every 100 accepted proposal draws.
+            vmacro_stand_dev = SQRT(vmacro_variance)
+            vmacro_stand_dev_MCMC = SQRT(vmacro_variance_MCMC)
+
+            IF (vmacro_fixed == 'Y') THEN
+                vmacro = vmacro_prior
+            ELSE IF ((vmacro_fixed == 'N') .AND. (vmacro_norm_prior == 'Y')) THEN
+                vmacro = vmacro_prior + (vmacro_stand_dev_MCMC*scale_factor*normal15(all_loop, walker))
+            ELSE IF ((vmacro_fixed == 'N') .AND. (vmacro_norm_prior == 'N')) THEN
+                vmacro = spread_rand_vmacro(all_loop, walker)
+            END IF
+            vmacro_sum = vmacro
+            vmacro_mean = vmacro
+            vmacro_diff_mean_2 = 0.0D0
+            vmacro_accept_mcmc_array(all_loop, walker) = vmacro
+            vmacro_all_mcmc_array(all_loop, walker) = vmacro
+            
+            
+            
+            
+            q_1_variance = q_1_1sigerr**2.0D0
+            q_1_variance_MCMC = q_1_1sigerr**2.0D0       !Update after every 100 accepted proposal draws.
+            q_1_stand_dev = SQRT(q_1_variance)
+            q_1_stand_dev_MCMC = SQRT(q_1_variance_MCMC)
+
+            IF (q_fixed == 'Y') THEN
+                q_1 = q_1_prior
+            ELSE IF ((q_fixed == 'N') .AND. (q_norm_prior == 'Y')) THEN
+                q_1 = q_1_prior + (q_1_stand_dev_MCMC*scale_factor*normal16(all_loop, walker))
+            ELSE IF ((q_fixed == 'N') .AND. (q_norm_prior == 'N')) THEN
+                q_1 = spread_rand_q_1(all_loop, walker)
+            END IF
+            q_1_sum = q_1
+            q_1_mean = q_1
+            q_1_diff_mean_2 = 0.0D0
+            q_1_accept_mcmc_array(all_loop, walker) = q_1
+            q_1_all_mcmc_array(all_loop, walker) = q_1
+            
+            
+            
+            
+            q_2_variance = q_2_1sigerr**2.0D0
+            q_2_variance_MCMC = q_2_1sigerr**2.0D0       !Update after every 100 accepted proposal draws.
+            q_2_stand_dev = SQRT(q_2_variance)
+            q_2_stand_dev_MCMC = SQRT(q_2_variance_MCMC)
+
+            IF (q_fixed == 'Y') THEN
+                q_2 = q_2_prior
+            ELSE IF ((q_fixed == 'N') .AND. (q_norm_prior == 'Y')) THEN
+                q_2 = q_2_prior + (q_2_stand_dev_MCMC*scale_factor*normal17(all_loop, walker))
+            ELSE IF ((q_fixed == 'N') .AND. (q_norm_prior == 'N')) THEN
+                q_2 = spread_rand_q_2(all_loop, walker)
+            END IF
+            q_2_sum = q_2
+            q_2_mean = q_2
+            q_2_diff_mean_2 = 0.0D0
+            q_2_accept_mcmc_array(all_loop, walker) = q_2
+            q_2_all_mcmc_array(all_loop, walker) = q_2
+            
+            
+            
+            
+            K_amp_variance = K_amp_1sigerr**2.0D0
+            K_amp_variance_MCMC = K_amp_1sigerr**2.0D0       !Update after every 100 accepted proposal draws.
+            K_amp_stand_dev = SQRT(K_amp_variance)
+            K_amp_stand_dev_MCMC = SQRT(K_amp_variance_MCMC)
+
+            IF (K_amp_fixed == 'Y') THEN
+                K_amp = K_amp_prior
+            ELSE IF ((K_amp_fixed == 'N') .AND. (K_amp_norm_prior == 'Y')) THEN
+                K_amp = K_amp_prior + (K_amp_stand_dev_MCMC*scale_factor*normal18(all_loop, walker))
+            ELSE IF ((K_amp_fixed == 'N') .AND. (K_amp_norm_prior == 'N')) THEN
+                K_amp = spread_rand_K_amp(all_loop, walker)
+            END IF
+            K_amp_sum = K_amp
+            K_amp_mean = K_amp
+            K_amp_diff_mean_2 = 0.0D0
+            K_amp_accept_mcmc_array(all_loop, walker) = K_amp
+            K_amp_all_mcmc_array(all_loop, walker) = K_amp
+            
+            
+            
+            
+            Impact_variance = Impact_1sigerr**2.0D0
+            Impact_variance_MCMC = Impact_1sigerr**2.0D0       !Update after every 100 accepted proposal draws.
+            Impact_stand_dev = SQRT(Impact_variance)
+            Impact_stand_dev_MCMC = SQRT(Impact_variance_MCMC)
+
+            IF (Impact_fixed == 'Y') THEN
+                Impact = Impact_prior
+            ELSE IF ((Impact_fixed == 'N') .AND. (Impact_norm_prior == 'Y')) THEN
+                Impact = Impact_prior + (Impact_stand_dev_MCMC*scale_factor*normal19(all_loop, walker))
+            ELSE IF ((Impact_fixed == 'N') .AND. (Impact_norm_prior == 'N')) THEN
+                Impact = spread_rand_Impact(all_loop, walker)
+            END IF
+            Impact_sum = Impact
+            Impact_mean = Impact
+            Impact_diff_mean_2 = 0.0D0
+            Impact_accept_mcmc_array(all_loop, walker) = Impact
+            Impact_all_mcmc_array(all_loop, walker) = Impact
+            
+            
+            
+            
+            Rorb_Rs_variance = Rorb_Rs_1sigerr**2.0D0
+            Rorb_Rs_variance_MCMC = Rorb_Rs_1sigerr**2.0D0       !Update after every 100 accepted proposal draws.
+            Rorb_Rs_stand_dev = SQRT(Rorb_Rs_variance)
+            Rorb_Rs_stand_dev_MCMC = SQRT(Rorb_Rs_variance_MCMC)
+
+            IF (Rorb_Rs_fixed == 'Y') THEN
+                Rorb_Rs = Rorb_Rs_prior
+            ELSE IF ((Rorb_Rs_fixed == 'N') .AND. (Rorb_Rs_norm_prior == 'Y')) THEN
+                Rorb_Rs = Rorb_Rs_prior + (Rorb_Rs_stand_dev_MCMC*scale_factor*normal20(all_loop, walker))
+            ELSE IF ((Rorb_Rs_fixed == 'N') .AND. (Rorb_Rs_norm_prior == 'N')) THEN
+                Rorb_Rs = spread_rand_Rorb_Rs(all_loop, walker)
+            END IF
+            Rorb_Rs_sum = Rorb_Rs
+            Rorb_Rs_mean = Rorb_Rs
+            Rorb_Rs_diff_mean_2 = 0.0D0
+            Rorb_Rs_accept_mcmc_array(all_loop, walker) = Rorb_Rs
+            Rorb_Rs_all_mcmc_array(all_loop, walker) = Rorb_Rs
             
             
             
@@ -1629,7 +2084,7 @@ DO CONCURRENT (walker = 1:number_mcmc_walkers)
                         vsini = vsini_prior + (vsini_stand_dev_MCMC*scale_factor*normal13(vsini_draw_loop, walker))
                     END DO
                 END IF
-            ELSE IF ((vsini_fixed == 'N') .AND. (vsini_norm_prior == 'Y')) THEN
+            ELSE IF ((vsini_fixed == 'N') .AND. (vsini_norm_prior == 'N')) THEN
                 vsini = spread_rand_vsini(vsini_draw_loop, walker)
             END IF
             vsini_sum = vsini
@@ -1892,6 +2347,12 @@ DO CONCURRENT (walker = 1:number_mcmc_walkers)
                 omega_arg_periastron = omega_arg_periastron_prior
             ELSE IF ((omega_arg_periastron_fixed == 'N') .AND. (omega_arg_periastron_norm_prior == 'Y')) THEN
                 omega_arg_periastron = omega_arg_periastron_accept_mcmc_array(all_loop - 1, walker) + (omega_arg_periastron_stand_dev_MCMC*scale_factor*normal11(all_loop, walker))
+                IF (omega_arg_periastron > 360.0D0) THEN
+                    omega_arg_periastron = 360.0D0 - omega_arg_periastron
+                END IF
+                IF (omega_arg_periastron < 0.0D0) THEN
+                    omega_arg_periastron = omega_arg_periastron + 360.0D0
+                END IF
             ELSE IF ((omega_arg_periastron_fixed == 'N') .AND. (omega_arg_periastron_norm_prior == 'N')) THEN
                 omega_arg_periastron = omega_arg_periastron_accept_mcmc_array(all_loop - 1, walker) + (scale_factor*spread_rand_omega(omega_arg_periastron_draw_loop, walker))
                 IF ((omega_arg_periastron < omega_arg_periastron_begin) .OR. (omega_arg_periastron > omega_arg_periastron_end)) THEN
@@ -1899,6 +2360,12 @@ DO CONCURRENT (walker = 1:number_mcmc_walkers)
                         omega_arg_periastron_draw_loop = omega_arg_periastron_draw_loop + 1
                         omega_arg_periastron = omega_arg_periastron_accept_mcmc_array(all_loop - 1, walker) + (scale_factor*spread_rand_omega(omega_arg_periastron_draw_loop, walker))
                     END DO
+                END IF
+                IF (omega_arg_periastron > 360.0D0) THEN
+                    omega_arg_periastron = 360.0D0 - omega_arg_periastron
+                END IF
+                IF (omega_arg_periastron < 0.0D0) THEN
+                    omega_arg_periastron = omega_arg_periastron + 360.0D0
                 END IF
             END IF
             omega_arg_periastron_all_mcmc_array(all_loop, walker) = omega_arg_periastron
@@ -1910,7 +2377,7 @@ DO CONCURRENT (walker = 1:number_mcmc_walkers)
                 RV_zero_offset = RV_zero_offset_prior
             ELSE IF ((RV_zero_offset_fixed == 'N') .AND. (RV_zero_offset_norm_prior == 'Y')) THEN
                 RV_zero_offset = RV_zero_offset_accept_mcmc_array(all_loop - 1, walker) + (RV_zero_offset_stand_dev_MCMC*scale_factor*normal12(all_loop, walker))
-            ELSE IF ((RV_zero_offset_fixed == 'N') .AND. (RV_zero_offset_norm_prior == 'Y')) THEN
+            ELSE IF ((RV_zero_offset_fixed == 'N') .AND. (RV_zero_offset_norm_prior == 'N')) THEN
                 RV_zero_offset = RV_zero_offset_accept_mcmc_array(all_loop - 1, walker) + (scale_factor*spread_rand_RV_zero(RV_zero_offset_draw_loop, walker))
                 IF ((RV_zero_offset < RV_zero_offset_begin) .OR. (RV_zero_offset > RV_zero_offset_end)) THEN
                     DO WHILE ((RV_zero_offset < RV_zero_offset_begin) .OR. (RV_zero_offset > RV_zero_offset_end))
@@ -1920,8 +2387,123 @@ DO CONCURRENT (walker = 1:number_mcmc_walkers)
                 END IF
             END IF
             RV_zero_offset_all_mcmc_array(all_loop, walker) = RV_zero_offset
+            
+            
+            
+            
+            IF (vmacro_fixed == 'Y') THEN
+                vmacro = vmacro_prior
+            ELSE IF ((vmacro_fixed == 'N') .AND. (vmacro_norm_prior == 'Y')) THEN
+                vmacro = vmacro_accept_mcmc_array(all_loop - 1, walker) + (vmacro_stand_dev_MCMC*scale_factor*normal15(vmacro_draw_loop, walker))
+                IF (vmacro < 0) THEN
+                    DO WHILE (vmacro < 0.0D0)
+                        vmacro_draw_loop = vmacro_draw_loop + 1
+                        vmacro = vmacro_accept_mcmc_array(all_loop - 1, walker) + (vmacro_stand_dev_MCMC*scale_factor*normal15(vmacro_draw_loop, walker))
+                    END DO
+                END IF
+
+            ELSE IF ((vmacro_fixed == 'N') .AND. (vmacro_norm_prior == 'N')) THEN
+                vmacro = vmacro_accept_mcmc_array(all_loop - 1, walker) + (scale_factor*spread_rand_vmacro(vmacro_draw_loop, walker))
+                IF ((vmacro < vmacro_begin) .OR. (vmacro > vmacro_end)) THEN
+                    DO WHILE ((vmacro < vmacro_begin) .OR. (vmacro > vmacro_end))
+                        vmacro_draw_loop = vmacro_draw_loop + 1
+                        vmacro = vmacro_accept_mcmc_array(all_loop - 1, walker) + (scale_factor*spread_rand_vmacro(vmacro_draw_loop, walker))
+                    END DO
+                END IF
+            END IF
+            vmacro_all_mcmc_array(all_loop, walker) = vmacro
+            
+            
+            
+            
+            IF (q_fixed == 'Y') THEN
+                q_1 = q_1_prior
+            ELSE IF ((q_fixed == 'N') .AND. (q_norm_prior == 'Y')) THEN
+                q_1 = q_1_accept_mcmc_array(all_loop - 1, walker) + (q_1_stand_dev_MCMC*scale_factor*normal16(all_loop, walker))
+            ELSE IF ((q_fixed == 'N') .AND. (q_norm_prior == 'Y')) THEN
+                q_1 = q_1_accept_mcmc_array(all_loop - 1, walker) + (scale_factor*spread_rand_q_1(q_1_draw_loop, walker))
+                IF ((q_1 < q_1_begin) .OR. (q_1 > q_1_end)) THEN
+                    DO WHILE ((q_1 < q_1_begin) .OR. (q_1 > q_1_end))
+                        q_1_draw_loop = q_1_draw_loop + 1
+                        q_1 = q_1_accept_mcmc_array(all_loop - 1, walker) + (scale_factor*spread_rand_q_1(q_1_draw_loop, walker))
+                    END DO
+                END IF
+            END IF
+            q_1_all_mcmc_array(all_loop, walker) = q_1
+            
+            
+            
+            
+            IF (q_fixed == 'Y') THEN
+                q_2 = q_2_prior
+            ELSE IF ((q_fixed == 'N') .AND. (q_norm_prior == 'Y')) THEN
+                q_2 = q_2_accept_mcmc_array(all_loop - 1, walker) + (q_2_stand_dev_MCMC*scale_factor*normal17(all_loop, walker))
+            ELSE IF ((q_fixed == 'N') .AND. (q_norm_prior == 'Y')) THEN
+                q_2 = q_2_accept_mcmc_array(all_loop - 1, walker) + (scale_factor*spread_rand_q_2(q_2_draw_loop, walker))
+                IF ((q_2 < q_2_begin) .OR. (q_2 > q_2_end)) THEN
+                    DO WHILE ((q_2 < q_2_begin) .OR. (q_2 > q_2_end))
+                        q_2_draw_loop = q_2_draw_loop + 1
+                        q_2 = q_2_accept_mcmc_array(all_loop - 1, walker) + (scale_factor*spread_rand_q_2(q_2_draw_loop, walker))
+                    END DO
+                END IF
+            END IF
+            q_2_all_mcmc_array(all_loop, walker) = q_2
+            
+            
+            
+            
+            IF (K_amp_fixed == 'Y') THEN
+                K_amp = K_amp_prior
+            ELSE IF ((K_amp_fixed == 'N') .AND. (K_amp_norm_prior == 'Y')) THEN
+                K_amp = K_amp_accept_mcmc_array(all_loop - 1, walker) + (K_amp_stand_dev_MCMC*scale_factor*normal18(all_loop, walker))
+            ELSE IF ((K_amp_fixed == 'N') .AND. (K_amp_norm_prior == 'Y')) THEN
+                K_amp = K_amp_accept_mcmc_array(all_loop - 1, walker) + (scale_factor*spread_rand_K_amp(K_amp_draw_loop, walker))
+                IF ((K_amp < K_amp_begin) .OR. (K_amp > K_amp_end)) THEN
+                    DO WHILE ((K_amp < K_amp_begin) .OR. (K_amp > K_amp_end))
+                        K_amp_draw_loop = K_amp_draw_loop + 1
+                        K_amp = K_amp_accept_mcmc_array(all_loop - 1, walker) + (scale_factor*spread_rand_K_amp(K_amp_draw_loop, walker))
+                    END DO
+                END IF
+            END IF
+            K_amp_all_mcmc_array(all_loop, walker) = K_amp
+            
+            
+            
+            
+            IF (Impact_fixed == 'Y') THEN
+                Impact = Impact_prior
+            ELSE IF ((Impact_fixed == 'N') .AND. (Impact_norm_prior == 'Y')) THEN
+                Impact = Impact_accept_mcmc_array(all_loop - 1, walker) + (Impact_stand_dev_MCMC*scale_factor*normal19(all_loop, walker))
+            ELSE IF ((Impact_fixed == 'N') .AND. (Impact_norm_prior == 'Y')) THEN
+                Impact = Impact_accept_mcmc_array(all_loop - 1, walker) + (scale_factor*spread_rand_Impact(Impact_draw_loop, walker))
+                IF ((Impact < Impact_begin) .OR. (Impact > Impact_end)) THEN
+                    DO WHILE ((Impact < Impact_begin) .OR. (Impact > Impact_end))
+                        Impact_draw_loop = Impact_draw_loop + 1
+                        Impact = Impact_accept_mcmc_array(all_loop - 1, walker) + (scale_factor*spread_rand_Impact(Impact_draw_loop, walker))
+                    END DO
+                END IF
+            END IF
+            Impact_all_mcmc_array(all_loop, walker) = Impact
+            
+            
+            
+            
+            IF (Rorb_Rs_fixed == 'Y') THEN
+                Rorb_Rs = Rorb_Rs_prior
+            ELSE IF ((Rorb_Rs_fixed == 'N') .AND. (Rorb_Rs_norm_prior == 'Y')) THEN
+                Rorb_Rs = Rorb_Rs_accept_mcmc_array(all_loop - 1, walker) + (Rorb_Rs_stand_dev_MCMC*scale_factor*normal20(all_loop, walker))
+            ELSE IF ((Rorb_Rs_fixed == 'N') .AND. (Rorb_Rs_norm_prior == 'Y')) THEN
+                Rorb_Rs = Rorb_Rs_accept_mcmc_array(all_loop - 1, walker) + (scale_factor*spread_rand_Rorb_Rs(Rorb_Rs_draw_loop, walker))
+                IF ((Rorb_Rs < Rorb_Rs_begin) .OR. (Rorb_Rs > Rorb_Rs_end)) THEN
+                    DO WHILE ((Rorb_Rs < Rorb_Rs_begin) .OR. (Rorb_Rs > Rorb_Rs_end))
+                        Rorb_Rs_draw_loop = Rorb_Rs_draw_loop + 1
+                        Rorb_Rs = Rorb_Rs_accept_mcmc_array(all_loop - 1, walker) + (scale_factor*spread_rand_Rorb_Rs(Rorb_Rs_draw_loop, walker))
+                    END DO
+                END IF
+            END IF
+            Rorb_Rs_all_mcmc_array(all_loop, walker) = Rorb_Rs
       
-      
+
       
       
             !Set the vsini_variance and stellar_rotation_angle_variance equal to the proposal variance of the previously accepted proposal.
@@ -1937,7 +2519,7 @@ DO CONCURRENT (walker = 1:number_mcmc_walkers)
                         vsini = vsini_accept_mcmc_array(all_loop - 1, walker) + (vsini_stand_dev_MCMC*scale_factor*normal13(vsini_draw_loop, walker))
                     END DO
                 END IF
-            ELSE IF ((vsini_fixed == 'N') .AND. (vsini_norm_prior == 'Y')) THEN
+            ELSE IF ((vsini_fixed == 'N') .AND. (vsini_norm_prior == 'N')) THEN
                 vsini = vsini_accept_mcmc_array(all_loop - 1, walker) + (scale_factor*spread_rand_vsini(vsini_draw_loop, walker))
                 IF ((vsini < vsini_begin) .OR. (vsini > vsini_end)) THEN
                     DO WHILE ((vsini < vsini_begin) .OR. (vsini > vsini_end))
@@ -2007,12 +2589,14 @@ DO CONCURRENT (walker = 1:number_mcmc_walkers)
                                                                                                   !until the likihood has been calculated to determine if the proposal is accepted 
                                                                                                   !or not.
       
-              
-              
-            
         END IF
 
+
+
+
         count_tested_proposals = count_tested_proposals + 1
+        
+        vturb = SQRT(beta_rot**2.0D0 + vmacro**2.0D0)            !Velocity width of spectral line due to mechanisms other than rotation (i.e. micro and macro turbulence).
 
         !Now apply the RV offset to my data.
         Allocate(Data_my_rv_offset(num_my_rv,3), data(datafilelength,3))
@@ -2044,6 +2628,9 @@ DO CONCURRENT (walker = 1:number_mcmc_walkers)
             END DO
         END IF
    
+   
+   
+      
         Allocate(Data_adjusted(datafilelength,3), sorted_data_array(datafilelength,3))
         !Adjust data time relative to mid transit time based on the new orbital period and JD time mid transit.
         DO l = 1, datafilelength
@@ -2079,26 +2666,36 @@ DO CONCURRENT (walker = 1:number_mcmc_walkers)
             END IF
         END DO
    
-   
-   
-   
-        IF (Jupiter_Earth_units == 'Y') THEN
-            Mp = Mpp*Mj
-        END IF
-
-        IF (Jupiter_Earth_units == 'N') THEN
-            Mp = Mpp*Me
-        END IF
-        
         Ms = Ms_solar*Mss
-        Rs = Rs_solar*Rss
-        
+   
+        IF ((use_impact == 'Y') .AND. (use_Rorb_Rs_ratio == 'Y')) THEN
+            Inc = acos((impact/(Rorb_Rs))*((1.0D0 + (Ecc*sin(omega_arg_periastron*(pi/180.0D0))))/(1.0D0 - Ecc**2.0D0)))*(180.0D0/pi)
+        END IF
+   
+        IF ((use_K_amp == 'Y') .AND. (Mp_fixed == 'Y') .AND. (Ecc == 0)) THEN
+            Mp = ((Orbital_period)/(2.0D0*pi*G))**(1.0D0/3.0D0)*((Ms**(2.0D0/3.0D0)*K_amp)/sin(Inc*(pi/180.0D0)))
+        ELSE
+            IF (Jupiter_Earth_units == 'Y') THEN
+                Mp = Mpp*Mj
+            END IF
+
+            IF (Jupiter_Earth_units == 'N') THEN
+                Mp = Mpp*Me
+            END IF
+        END IF
         
         Rorb = ((Orbital_period**2.0d0*G*(Ms + Mp))/(4.0d0*pi**2.0d0))**(1.0d0/3.0d0)     !Semi-major axis.
         Rorb_star = ((Orbital_period**2.0D0*G*((Mp**(3.0D0))/(Ms + Mp)**(2.0D0)))/(4.0d0*pi**2.0D0))**(1.0d0/3.0d0)     !Semi-major of stellar axis.
 
+        IF (use_Rorb_Rs_ratio == 'Y') THEN
+            Rs = Rorb/(Rorb_Rs_prior)
+        ELSE
+            Rs = Rss * Rs_solar
+        END IF
+
+        !Based on given priors, determine the approximate time in the simulation to start and finish comparing RV's with model.
         IF (use_Rp_Rs_ratio == 'Y') THEN
-             Rp = Rp_Rs_ratio * (Rs_solar * Rss)
+            Rp = Rp_Rs_ratio * Rs
         ELSE
             IF (Jupiter_Earth_units == 'Y') THEN
                 Rp = Rpp*Rj
@@ -2115,12 +2712,23 @@ DO CONCURRENT (walker = 1:number_mcmc_walkers)
         
         Rs2 = Rs**2.0D0                              !Square the radius of star to speed up calculations.
         
-        IF (Ecc == 0) THEN 
-            !Maximum amplitude caused by the exoplanet in a circular orbit.
-            RVamplitude = SQRT((G*(Mp**(3.0D0))*(sin(Inc*(pi/180.0D0)))**(3.0D0))/(Rorb_star*sin(Inc*(pi/180.0D0))*(Ms + Mp)**(2.0D0)))
+        IF (use_K_amp == 'Y') THEN
+            RVamplitude = K_amp
         ELSE
-            !Maximum amplitude caused by the exoplanet in an eccentric orbit.
-            RVamplitude = SQRT((G*(Mp**(3.0D0))*(sin(Inc*(pi/180.0D0)))**(3.0D0))/((1.0D0 - Ecc**2.0D0)*Rorb_star*sin(Inc*(pi/180.0D0))*(Ms + Mp)**(2.0D0)))
+            IF (Ecc == 0) THEN 
+                !Maximum amplitude caused by the exoplanet in a circular orbit.
+                RVamplitude = SQRT((G*(Mp**(3.0D0))*(sin(Inc*(pi/180.0D0)))**(3.0D0))/(Rorb_star*sin(Inc*(pi/180.0D0))*(Ms + Mp)**(2.0D0)))
+            ELSE
+                !Maximum amplitude caused by the exoplanet in an eccentric orbit.
+                RVamplitude = SQRT((G*(Mp**(3.0D0))*(sin(Inc*(pi/180.0D0)))**(3.0D0))/((1.0D0 - Ecc**2.0D0)*Rorb_star*sin(Inc*(pi/180.0D0))*(Ms + Mp)**(2.0D0)))
+            END IF
+        END IF
+        
+        IF (linear_quadratic == 'q') THEN
+           Io = 6.0D0 / (pi*Rs2*(6.0D0 - (2.0D0*q_1) - q_2))     !The initial light intensity equation with limb darkening (quadratic)
+        ELSE
+           Io = 1.0D0 / (pi*Rs2*(1.0D0-(u/3.0D0)))      !The initial light intensity equation with limb darkening (linear)
+                                                        !(normalize Io such that total star luminosity is 1). 
         END IF
         
         True_anomaly_start = pi - (omega_arg_periastron*(pi/180.0D0))
@@ -2216,12 +2824,12 @@ DO CONCURRENT (walker = 1:number_mcmc_walkers)
 
             IF (Ecc == 0) THEN
                 !The time of the similation for a specific true_anomaly with the mid transit time equal to 0.
-                Time_check = ((ecc_anomaly*Orbital_period)/(2.0D0*pi)) + time_peri_passage
+                !Time_check = ((ecc_anomaly*Orbital_period)/(2.0D0*pi)) + time_peri_passage
                 !The distance between the center of the planet to the center of the star in a circular orbit.
                 Planet_star_distance = Rorb + Rorb_star
             ELSE
                 !The time of the similation for a specific true_anomaly.
-                Time_check = (((ecc_anomaly - (Ecc*sin(ecc_anomaly)))*Orbital_period)/(2.0D0*pi)) + time_peri_passage         
+                !Time_check = (((ecc_anomaly - (Ecc*sin(ecc_anomaly)))*Orbital_period)/(2.0D0*pi)) + time_peri_passage         
                 !The distance between the center of the planet to the center of the star in an eccentric orbit.
                 Planet_star_distance = ((Rorb + Rorb_star)*(1.0D0 - Ecc**2.0D0))/(1.0D0 + (Ecc*cos(True_anomaly)))
             END IF
@@ -2244,50 +2852,50 @@ DO CONCURRENT (walker = 1:number_mcmc_walkers)
             v_rm = 0.0D0                                !Anomalous velocity of each pixel set to zero.
             Total_RM = 0.0D0
             
-            IF ((Xpos <= 0) .AND. (Zpos >= 0)) THEN
-                !Planet is currently in quadrant three so add pi.
-                IF (Zpos == 0) THEN
-                    phase_angle = pi/2.0D0
-                    Phase_angle_observed = pi/2.0D0
-                ELSE
-                    phase_angle = atan(Xpos/Zpos) + pi
-                    !Taking into account orbital inclination.
-                    Phase_angle_observed = atan(-(sqrt(Xpos**2.0D0 + Ypos**2.0D0))/Zpos) + pi
-                END IF
-            ELSE IF ((Xpos >= 0) .AND. (Zpos >= 0)) THEN
-                !Planet is currently in quadrant four so add pi.
-                IF (Zpos == 0) THEN
-                    phase_angle = pi/2.0D0 + pi
-                    Phase_angle_observed = pi/2.0D0 + pi
-                ELSE
-                    phase_angle = atan(Xpos/Zpos) + pi
-                    !Taking into account orbital inclination.
-                    Phase_angle_observed = atan((sqrt(Xpos**2.0D0 + Ypos**2.0D0))/Zpos) + pi
-                END IF
-            ELSE IF ((Xpos >= 0) .AND. (Zpos <= 0)) THEN
-                !Planet is currently in quadrant one so add 2pi.
-                IF (Zpos == 0) THEN
-                    phase_angle = pi/2.0D0
-                    Phase_angle_observed = pi/2.0D0
-                ELSE
-                    phase_angle = 2.0D0*pi + atan(Xpos/Zpos)
-                    !Taking into account orbital inclination.
-                    Phase_angle_observed = 2.0D0*pi + atan((sqrt(Xpos**2.0D0 + Ypos**2.0D0))/Zpos)
-                END IF
-            ELSE IF ((Xpos <= 0) .AND. (Zpos <= 0)) THEN
-                !Planet is currently in quadrant two so add 2pi.
-                IF (Zpos == 0) THEN
-                    phase_angle = pi/2.0D0 + pi
-                    Phase_angle_observed = pi/2.0D0 + pi
-                ELSE
-                    phase_angle = atan(Xpos/Zpos)
-                    !Taking into account orbital inclination.
-                    Phase_angle_observed = atan(-(sqrt(Xpos**2.0D0 + Ypos**2.0D0))/Zpos)
-                END IF
-            END IF 
+!             IF ((Xpos <= 0) .AND. (Zpos >= 0)) THEN
+!                 !Planet is currently in quadrant three so add pi.
+!                 IF (Zpos == 0) THEN
+!                     phase_angle = pi/2.0D0
+!                     Phase_angle_observed = pi/2.0D0
+!                 ELSE
+!                     phase_angle = atan(Xpos/Zpos) + pi
+!                     !Taking into account orbital inclination.
+!                     Phase_angle_observed = atan(-(sqrt(Xpos**2.0D0 + Ypos**2.0D0))/Zpos) + pi
+!                 END IF
+!             ELSE IF ((Xpos >= 0) .AND. (Zpos >= 0)) THEN
+!                 !Planet is currently in quadrant four so add pi.
+!                 IF (Zpos == 0) THEN
+!                     phase_angle = pi/2.0D0 + pi
+!                     Phase_angle_observed = pi/2.0D0 + pi
+!                 ELSE
+!                     phase_angle = atan(Xpos/Zpos) + pi
+!                     !Taking into account orbital inclination.
+!                     Phase_angle_observed = atan((sqrt(Xpos**2.0D0 + Ypos**2.0D0))/Zpos) + pi
+!                 END IF
+!             ELSE IF ((Xpos >= 0) .AND. (Zpos <= 0)) THEN
+!                 !Planet is currently in quadrant one so add 2pi.
+!                 IF (Zpos == 0) THEN
+!                     phase_angle = pi/2.0D0
+!                     Phase_angle_observed = pi/2.0D0
+!                 ELSE
+!                     phase_angle = 2.0D0*pi + atan(Xpos/Zpos)
+!                     !Taking into account orbital inclination.
+!                     Phase_angle_observed = 2.0D0*pi + atan((sqrt(Xpos**2.0D0 + Ypos**2.0D0))/Zpos)
+!                 END IF
+!             ELSE IF ((Xpos <= 0) .AND. (Zpos <= 0)) THEN
+!                 !Planet is currently in quadrant two so add 2pi.
+!                 IF (Zpos == 0) THEN
+!                     phase_angle = pi/2.0D0 + pi
+!                     Phase_angle_observed = pi/2.0D0 + pi
+!                 ELSE
+!                     phase_angle = atan(Xpos/Zpos)
+!                     !Taking into account orbital inclination.
+!                     Phase_angle_observed = atan(-(sqrt(Xpos**2.0D0 + Ypos**2.0D0))/Zpos)
+!                 END IF
+!             END IF
             
             True_phase = acos(sin(True_anomaly + (omega_arg_periastron*(pi/180.0D0)))*sin(Inc*(pi/180.0D0)))
-            Phase_orbit_n = acos(sin(True_anomaly + (omega_arg_periastron*(pi/180.0D0))))
+!            Phase_orbit_n = acos(sin(True_anomaly + (omega_arg_periastron*(pi/180.0D0))))
    
             !If the planet is neither infront of the star (transit) or behind the star (occultation), then calculate the flux being reflected 
             !off the surface of the exoplanet based on its bond albedo, radius, phase angle, etc.
@@ -2523,8 +3131,11 @@ DO CONCURRENT (walker = 1:number_mcmc_walkers)
 
         END DO
          
-        !*******************************************************************************************************************************
-   
+        !*******************************************************************************************************************************   
+
+
+
+
         Number_points1 = 1
         chi_2 = 0.0D0          !Set chi squared equal to zero.
         model_data_difference = 0.0D0        
@@ -2621,6 +3232,43 @@ DO CONCURRENT (walker = 1:number_mcmc_walkers)
             Rp_Rs_ratio_1sigerr_temp = Rp_Rs_ratio_1sigerr
         END IF
         
+        IF (vmacro_1sigerr <= 0.0D0) THEN
+            vmacro_1sigerr_temp = 1.0D0
+        ELSE
+            vmacro_1sigerr_temp = vmacro_1sigerr
+        END IF
+        
+        IF (q_1_1sigerr <= 0.0D0) THEN
+            q_1_1sigerr_temp = 1.0D0
+        ELSE
+            q_1_1sigerr_temp = q_1_1sigerr
+        END IF
+        
+        IF (q_2_1sigerr <= 0.0D0) THEN
+            q_2_1sigerr_temp = 1.0D0
+        ELSE
+            q_2_1sigerr_temp = q_2_1sigerr
+        END IF
+        
+        IF (K_amp_1sigerr <= 0.0D0) THEN
+            K_amp_1sigerr_temp = 1.0D0
+        ELSE
+            K_amp_1sigerr_temp = K_amp_1sigerr
+        END IF
+        
+        IF (Impact_1sigerr <= 0.0D0) THEN
+            Impact_1sigerr_temp = 1.0D0
+        ELSE
+            Impact_1sigerr_temp = Impact_1sigerr
+        END IF
+        
+        IF (Rorb_Rs_1sigerr <= 0.0D0) THEN
+            Rorb_Rs_1sigerr_temp = 1.0D0
+        ELSE
+            Rorb_Rs_1sigerr_temp = Rorb_Rs_1sigerr
+        END IF
+        
+           
         IF ((impose_prior_vsini == 'Y') .AND. (impose_prior_stellar_rotation_angle == 'Y')) THEN
                 
             chi_2 = chi_2 + ((stellar_rotation_angle - stellar_rotation_angle_prior)/stellar_rotation_angle_1sigerr_temp)**2.0D0 &
@@ -2632,7 +3280,10 @@ DO CONCURRENT (walker = 1:number_mcmc_walkers)
                     + ((Mpp - Mp_prior)/Mp_1sigerr_temp)**2.0D0 + ((Rpp - Rp_prior)/Rp_1sigerr_temp)**2.0D0 &
                     + ((Ecc - Ecc_prior)/Ecc_1sigerr_temp)**2.0D0 + ((Inc - Inc_prior)/Inc_1sigerr_temp)**2.0D0 &
                     + ((Ms_solar - Ms_solar_prior)/Ms_solar_1sigerr_temp)**2.0D0 + ((Rs_solar - Rs_solar_prior)/Rs_solar_1sigerr_temp)**2.0D0 &
-                    + ((Rp_Rs_ratio - Rp_Rs_ratio_prior)/Rp_Rs_ratio_1sigerr_temp)**2.0D0
+                    + ((Rp_Rs_ratio - Rp_Rs_ratio_prior)/Rp_Rs_ratio_1sigerr_temp)**2.0D0 &
+                    + ((vmacro - vmacro_prior)/vmacro_1sigerr_temp)**2.0D0 + ((q_1 - q_1_prior)/q_1_1sigerr_temp)**2.0D0 &
+                    + ((q_2 - q_2_prior)/q_2_1sigerr_temp)**2.0D0 + ((K_amp - K_amp_prior)/K_amp_1sigerr_temp)**2.0D0 &
+                    + ((Impact - Impact_prior)/Impact_1sigerr_temp)**2.0D0 + ((Rorb_Rs - Rorb_Rs_prior)/Rorb_Rs_1sigerr_temp)**2.0D0
                         
         ELSE IF ((impose_prior_vsini == 'Y') .AND. (impose_prior_stellar_rotation_angle == 'N')) THEN
                 
@@ -2644,7 +3295,10 @@ DO CONCURRENT (walker = 1:number_mcmc_walkers)
                     + ((Mpp - Mp_prior)/Mp_1sigerr_temp)**2.0D0 + ((Rpp - Rp_prior)/Rp_1sigerr_temp)**2.0D0 &
                     + ((Ecc - Ecc_prior)/Ecc_1sigerr_temp)**2.0D0 + ((Inc - Inc_prior)/Inc_1sigerr_temp)**2.0D0 &
                     + ((Ms_solar - Ms_solar_prior)/Ms_solar_1sigerr_temp)**2.0D0 + ((Rs_solar - Rs_solar_prior)/Rs_solar_1sigerr_temp)**2.0D0 &
-                    + ((Rp_Rs_ratio - Rp_Rs_ratio_prior)/Rp_Rs_ratio_1sigerr_temp)**2.0D0
+                    + ((Rp_Rs_ratio - Rp_Rs_ratio_prior)/Rp_Rs_ratio_1sigerr_temp)**2.0D0 &
+                    + ((vmacro - vmacro_prior)/vmacro_1sigerr_temp)**2.0D0 + ((q_1 - q_1_prior)/q_1_1sigerr_temp)**2.0D0 &
+                    + ((q_2 - q_2_prior)/q_2_1sigerr_temp)**2.0D0 + ((K_amp - K_amp_prior)/K_amp_1sigerr_temp)**2.0D0 &
+                    + ((Impact - Impact_prior)/Impact_1sigerr_temp)**2.0D0 + ((Rorb_Rs - Rorb_Rs_prior)/Rorb_Rs_1sigerr_temp)**2.0D0
                         
         ELSE IF ((impose_prior_vsini == 'N') .AND. (impose_prior_stellar_rotation_angle == 'Y')) THEN
                 
@@ -2656,7 +3310,10 @@ DO CONCURRENT (walker = 1:number_mcmc_walkers)
                     + ((Mpp - Mp_prior)/Mp_1sigerr_temp)**2.0D0 + ((Rpp - Rp_prior)/Rp_1sigerr_temp)**2.0D0 &
                     + ((Ecc - Ecc_prior)/Ecc_1sigerr_temp)**2.0D0 + ((Inc - Inc_prior)/Inc_1sigerr_temp)**2.0D0 &
                     + ((Ms_solar - Ms_solar_prior)/Ms_solar_1sigerr_temp)**2.0D0 + ((Rs_solar - Rs_solar_prior)/Rs_solar_1sigerr_temp)**2.0D0 &
-                    + ((Rp_Rs_ratio - Rp_Rs_ratio_prior)/Rp_Rs_ratio_1sigerr_temp)**2.0D0
+                    + ((Rp_Rs_ratio - Rp_Rs_ratio_prior)/Rp_Rs_ratio_1sigerr_temp)**2.0D0 &
+                    + ((vmacro - vmacro_prior)/vmacro_1sigerr_temp)**2.0D0 + ((q_1 - q_1_prior)/q_1_1sigerr_temp)**2.0D0 &
+                    + ((q_2 - q_2_prior)/q_2_1sigerr_temp)**2.0D0 + ((K_amp - K_amp_prior)/K_amp_1sigerr_temp)**2.0D0 &
+                    + ((Impact - Impact_prior)/Impact_1sigerr_temp)**2.0D0 + ((Rorb_Rs - Rorb_Rs_prior)/Rorb_Rs_1sigerr_temp)**2.0D0
                         
         ELSE
                 
@@ -2667,7 +3324,10 @@ DO CONCURRENT (walker = 1:number_mcmc_walkers)
                     + ((Mpp - Mp_prior)/Mp_1sigerr_temp)**2.0D0 + ((Rpp - Rp_prior)/Rp_1sigerr_temp)**2.0D0 &
                     + ((Ecc - Ecc_prior)/Ecc_1sigerr_temp)**2.0D0 + ((Inc - Inc_prior)/Inc_1sigerr_temp)**2.0D0 &
                     + ((Ms_solar - Ms_solar_prior)/Ms_solar_1sigerr_temp)**2.0D0 + ((Rs_solar - Rs_solar_prior)/Rs_solar_1sigerr_temp)**2.0D0 &
-                    + ((Rp_Rs_ratio - Rp_Rs_ratio_prior)/Rp_Rs_ratio_1sigerr_temp)**2.0D0
+                    + ((Rp_Rs_ratio - Rp_Rs_ratio_prior)/Rp_Rs_ratio_1sigerr_temp)**2.0D0 &
+                    + ((vmacro - vmacro_prior)/vmacro_1sigerr_temp)**2.0D0 + ((q_1 - q_1_prior)/q_1_1sigerr_temp)**2.0D0 &
+                    + ((q_2 - q_2_prior)/q_2_1sigerr_temp)**2.0D0 + ((K_amp - K_amp_prior)/K_amp_1sigerr_temp)**2.0D0 &
+                    + ((Impact - Impact_prior)/Impact_1sigerr_temp)**2.0D0 + ((Rorb_Rs - Rorb_Rs_prior)/Rorb_Rs_1sigerr_temp)**2.0D0
               
         END IF
         
@@ -2800,11 +3460,35 @@ DO CONCURRENT (walker = 1:number_mcmc_walkers)
                 Inc_stand_dev = SQRT(Inc_variance)
 
                 omega_arg_periastron_sum = omega_arg_periastron_sum + omega_arg_periastron
-                omega_arg_periastron_mean = omega_arg_periastron_sum/all_loop
-                omega_arg_periastron_diff_mean_2 = omega_arg_periastron_diff_mean_2 + abs(omega_arg_periastron - omega_arg_periastron_mean)**2.0D0
+                !omega_arg_periastron_mean = omega_arg_periastron_sum/all_loop
+                !Calculate the median instead of mean to avoid outliers from values wrapped around to 360 if less than 0 and vice versa.
+                !Allocate(omega_arg_periastron_sorted_array(all_loop - 1))
+                !CALL Selection_sort(omega_arg_periastron_all_mcmc_array(1:all_loop - 1, walker), index_array)
+                IF (omega_arg_periastron_fixed == 'N') THEN
+                    CALL Insertion_Sort(omega_arg_periastron_sorted_array(1:all_loop - 1, walker))
+                END IF
+                !DO l = 1, all_loop - 1
+                !    omega_arg_periastron_sorted_array(l) = omega_arg_periastron_all_mcmc_array(index_array(l), walker)
+                !END DO
+                IF (MOD(all_loop - 1_INT64, 2_INT64) == 0) THEN           ! compute the median
+                   omega_arg_periastron_mean = (omega_arg_periastron_sorted_array((all_loop - 1)/2, walker) + omega_arg_periastron_sorted_array((all_loop - 1)/2+1, walker)) / 2.0D0
+                ELSE
+                   omega_arg_periastron_mean = omega_arg_periastron_sorted_array((all_loop - 1)/2+1, walker)
+                END IF
+                !DEALLOCATE(omega_arg_periastron_sorted_array)
+                !omega_arg_periastron_mean = Median(omega_arg_periastron_all_mcmc_array(1:all_loop - 1, walker), all_loop - 1)
+                !omega_arg_periastron_diff_mean_2 = omega_arg_periastron_diff_mean_2 + abs(omega_arg_periastron - omega_arg_periastron_mean)**2.0D0
+                !Take care of wrap around angles, i.e. if the previous value is 20 but the current median is 350 then the difference 30 not 330
+                IF ((omega_arg_periastron >= 0.0D0) .AND. (omega_arg_periastron <= 90.0D0) .AND. (omega_arg_periastron_mean >= 270.0D0)) THEN
+                    omega_arg_periastron_diff_mean_2 = omega_arg_periastron_diff_mean_2 + abs((360.0D0 + omega_arg_periastron) - omega_arg_periastron_mean)**2.0D0
+                ELSE IF ((omega_arg_periastron_mean >= 0.0D0) .AND. (omega_arg_periastron_mean <= 90.0D0) .AND. (omega_arg_periastron >= 270.0D0)) THEN
+                    omega_arg_periastron_diff_mean_2 = omega_arg_periastron_diff_mean_2 + abs((omega_arg_periastron - 360.0D0) - omega_arg_periastron_mean)**2.0D0
+                ELSE
+                    omega_arg_periastron_diff_mean_2 = omega_arg_periastron_diff_mean_2 + abs(omega_arg_periastron - omega_arg_periastron_mean)**2.0D0
+                END IF
                 omega_arg_periastron_variance = omega_arg_periastron_diff_mean_2/(all_loop - 1.0D0)     
-                omega_arg_periastron_stand_dev = SQRT(omega_arg_periastron_variance)    
-            
+                omega_arg_periastron_stand_dev = SQRT(omega_arg_periastron_variance)
+
                 Ms_solar_sum = Ms_solar_sum + Ms_solar
                 Ms_solar_mean = Ms_solar_sum/all_loop
                 Ms_solar_diff_mean_2 = Ms_solar_diff_mean_2 + abs(Ms_solar - Ms_solar_mean)**2.0D0
@@ -2822,6 +3506,42 @@ DO CONCURRENT (walker = 1:number_mcmc_walkers)
                 Rp_Rs_ratio_diff_mean_2 = Rp_Rs_ratio_diff_mean_2 + abs(Rp_Rs_ratio - Rp_Rs_ratio_mean)**2.0D0
                 Rp_Rs_ratio_variance = Rp_Rs_ratio_diff_mean_2/(all_loop - 1.0D0)
                 Rp_Rs_ratio_stand_dev = SQRT(Rp_Rs_ratio_variance)
+                
+                vmacro_sum = vmacro_sum + vmacro
+                vmacro_mean = vmacro_sum/all_loop
+                vmacro_diff_mean_2 = vmacro_diff_mean_2 + abs(vmacro - vmacro_mean)**2.0D0
+                vmacro_variance = vmacro_diff_mean_2/(all_loop - 1.0D0)
+                vmacro_stand_dev = SQRT(vmacro_variance)
+                
+                q_1_sum = q_1_sum + q_1
+                q_1_mean = q_1_sum/all_loop
+                q_1_diff_mean_2 = q_1_diff_mean_2 + abs(q_1 - q_1_mean)**2.0D0
+                q_1_variance = q_1_diff_mean_2/(all_loop - 1.0D0)
+                q_1_stand_dev = SQRT(q_1_variance)
+                
+                q_2_sum = q_2_sum + q_2
+                q_2_mean = q_2_sum/all_loop
+                q_2_diff_mean_2 = q_2_diff_mean_2 + abs(q_2 - q_2_mean)**2.0D0
+                q_2_variance = q_2_diff_mean_2/(all_loop - 1.0D0)
+                q_2_stand_dev = SQRT(q_2_variance)
+                
+                K_amp_sum = K_amp_sum + K_amp
+                K_amp_mean = K_amp_sum/all_loop
+                K_amp_diff_mean_2 = K_amp_diff_mean_2 + abs(K_amp - K_amp_mean)**2.0D0
+                K_amp_variance = K_amp_diff_mean_2/(all_loop - 1.0D0)
+                K_amp_stand_dev = SQRT(K_amp_variance)
+                
+                Impact_sum = Impact_sum + Impact
+                Impact_mean = Impact_sum/all_loop
+                Impact_diff_mean_2 = Impact_diff_mean_2 + abs(Impact - Impact_mean)**2.0D0
+                Impact_variance = Impact_diff_mean_2/(all_loop - 1.0D0)
+                Impact_stand_dev = SQRT(Impact_variance)
+                
+                Rorb_Rs_sum = Rorb_Rs_sum + Rorb_Rs
+                Rorb_Rs_mean = Rorb_Rs_sum/all_loop
+                Rorb_Rs_diff_mean_2 = Rorb_Rs_diff_mean_2 + abs(Rorb_Rs - Rorb_Rs_mean)**2.0D0
+                Rorb_Rs_variance = Rorb_Rs_diff_mean_2/(all_loop - 1.0D0)
+                Rorb_Rs_stand_dev = SQRT(Rorb_Rs_variance)
                 
                 vsini_accept_mcmc_array(all_loop, walker) = vsini
                 vsini_variance_current_array(all_loop, walker) = vsini_variance             !The variance updated at every iteration.
@@ -2843,6 +3563,13 @@ DO CONCURRENT (walker = 1:number_mcmc_walkers)
                 Ecc_accept_mcmc_array(all_loop, walker) = Ecc
                 Inc_accept_mcmc_array(all_loop, walker) = Inc
                 omega_arg_periastron_accept_mcmc_array(all_loop, walker) = omega_arg_periastron
+                omega_arg_periastron_sorted_array(all_loop, walker) = omega_arg_periastron
+                vmacro_accept_mcmc_array(all_loop, walker) = vmacro
+                q_1_accept_mcmc_array(all_loop, walker) = q_1
+                q_2_accept_mcmc_array(all_loop, walker) = q_2
+                K_amp_accept_mcmc_array(all_loop, walker) = K_amp
+                Impact_accept_mcmc_array(all_loop, walker) = Impact
+                Rorb_Rs_accept_mcmc_array(all_loop, walker) = Rorb_Rs
 
                 !Rejection flag for the proposal parameters is set to false.
                 Reject_flag = 'F'
@@ -2890,7 +3617,25 @@ DO CONCURRENT (walker = 1:number_mcmc_walkers)
             
                     omega_arg_periastron_variance_MCMC = omega_arg_periastron_variance
                     omega_arg_periastron_stand_dev_MCMC = omega_arg_periastron_stand_dev
-            
+                    
+                    vmacro_variance_MCMC = vmacro_variance
+                    vmacro_stand_dev_MCMC = vmacro_stand_dev
+                    
+                    q_1_variance_MCMC = q_1_variance
+                    q_1_stand_dev_MCMC = q_1_stand_dev
+                    
+                    q_2_variance_MCMC = q_2_variance
+                    q_2_stand_dev_MCMC = q_2_stand_dev
+                    
+                    K_amp_variance_MCMC = K_amp_variance
+                    K_amp_stand_dev_MCMC = K_amp_stand_dev
+                    
+                    Impact_variance_MCMC = Impact_variance
+                    Impact_stand_dev_MCMC = Impact_stand_dev
+                    
+                    Rorb_Rs_variance_MCMC = Rorb_Rs_variance
+                    Rorb_Rs_stand_dev_MCMC = Rorb_Rs_stand_dev
+                    
                     !Update the scale factor for drawing new proposals. This is based on Cameron et al. 2007.
                     scale_factor = (400.0D0*scale_factor)/DBLE(count_tested_proposals)
             
@@ -2998,12 +3743,41 @@ DO CONCURRENT (walker = 1:number_mcmc_walkers)
                 Inc_variance = Inc_diff_mean_2/(all_loop - 1.0D0)
                 Inc_stand_dev = SQRT(Inc_variance)
 
+                !omega_arg_periastron_sum = omega_arg_periastron_sum + omega_arg_periastron_accept_mcmc_array(all_loop - 1, walker)
+                !omega_arg_periastron_mean = omega_arg_periastron_sum/all_loop
+                !omega_arg_periastron_diff_mean_2 = omega_arg_periastron_diff_mean_2 &
+                !                                   + abs(omega_arg_periastron_accept_mcmc_array(all_loop - 1, walker) - omega_arg_periastron_mean)**2.0D0
+                !omega_arg_periastron_variance = omega_arg_periastron_diff_mean_2/(all_loop - 1.0D0)     
+                !omega_arg_periastron_stand_dev = SQRT(omega_arg_periastron_variance)    
                 omega_arg_periastron_sum = omega_arg_periastron_sum + omega_arg_periastron_accept_mcmc_array(all_loop - 1, walker)
-                omega_arg_periastron_mean = omega_arg_periastron_sum/all_loop
-                omega_arg_periastron_diff_mean_2 = omega_arg_periastron_diff_mean_2 &
-                                                   + abs(omega_arg_periastron_accept_mcmc_array(all_loop - 1, walker) - omega_arg_periastron_mean)**2.0D0
+                !omega_arg_periastron_mean = omega_arg_periastron_sum/all_loop
+                !Calculate the median instead of mean to avoid outliers from values wrapped around to <360 if less than 0 and vice versa.
+                !Allocate(omega_arg_periastron_sorted_array(all_loop - 1))
+                !CALL Selection_sort(omega_arg_periastron_accept_mcmc_array(1:all_loop - 1, walker), index_array)
+                IF (omega_arg_periastron_fixed == 'N') THEN
+                    CALL Insertion_Sort(omega_arg_periastron_sorted_array(1:all_loop - 1, walker))
+                END IF
+                !DO l = 1, all_loop - 1
+                !    omega_arg_periastron_sorted_array(l) = omega_arg_periastron_accept_mcmc_array(index_array(l), walker)
+                !END DO
+                IF (MOD(all_loop - 1_INT64, 2_INT64) == 0) THEN           ! compute the median
+                   omega_arg_periastron_mean = (omega_arg_periastron_sorted_array((all_loop - 1)/2, walker) + omega_arg_periastron_sorted_array((all_loop - 1)/2+1, walker)) / 2.0D0
+                ELSE
+                   omega_arg_periastron_mean = omega_arg_periastron_sorted_array((all_loop - 1)/2+1, walker)
+                END IF
+                !DEALLOCATE(omega_arg_periastron_sorted_array)
+                !omega_arg_periastron_mean = Median(omega_arg_periastron_accept_mcmc_array(1:all_loop - 1, walker), all_loop - 1)
+                !omega_arg_periastron_diff_mean_2 = omega_arg_periastron_diff_mean_2 + abs(omega_arg_periastron - omega_arg_periastron_mean)**2.0D0
+                !Take care of wrap around angles, i.e. if the previous value is 20 but the current median is 350 then the difference 30 not 330
+                IF ((omega_arg_periastron >= 0.0D0) .AND. (omega_arg_periastron <= 90.0D0) .AND. (omega_arg_periastron_mean >= 270.0D0)) THEN
+                    omega_arg_periastron_diff_mean_2 = omega_arg_periastron_diff_mean_2 + abs((360.0D0 + omega_arg_periastron) - omega_arg_periastron_mean)**2.0D0
+                ELSE IF ((omega_arg_periastron_mean >= 0.0D0) .AND. (omega_arg_periastron_mean <= 90.0D0) .AND. (omega_arg_periastron >= 270.0D0)) THEN
+                    omega_arg_periastron_diff_mean_2 = omega_arg_periastron_diff_mean_2 + abs((omega_arg_periastron - 360.0D0) - omega_arg_periastron_mean)**2.0D0
+                ELSE
+                    omega_arg_periastron_diff_mean_2 = omega_arg_periastron_diff_mean_2 + abs(omega_arg_periastron - omega_arg_periastron_mean)**2.0D0
+                END IF
                 omega_arg_periastron_variance = omega_arg_periastron_diff_mean_2/(all_loop - 1.0D0)     
-                omega_arg_periastron_stand_dev = SQRT(omega_arg_periastron_variance)    
+                omega_arg_periastron_stand_dev = SQRT(omega_arg_periastron_variance)
             
                 Ms_solar_sum = Ms_solar_sum + Ms_solar_accept_mcmc_array(all_loop - 1, walker)
                 Ms_solar_mean = Ms_solar_sum/all_loop
@@ -3022,6 +3796,42 @@ DO CONCURRENT (walker = 1:number_mcmc_walkers)
                 Rp_Rs_ratio_diff_mean_2 = Rp_Rs_ratio_diff_mean_2 + abs(Rp_Rs_ratio_accept_mcmc_array(all_loop - 1, walker) - Rp_Rs_ratio_mean)**2.0D0
                 Rp_Rs_ratio_variance = Rp_Rs_ratio_diff_mean_2/(all_loop - 1.0D0)
                 Rp_Rs_ratio_stand_dev = SQRT(Rp_Rs_ratio_variance)
+                
+                vmacro_sum = vmacro_sum + vmacro_accept_mcmc_array(all_loop - 1, walker)
+                vmacro_mean = vmacro_sum/all_loop
+                vmacro_diff_mean_2 = vmacro_diff_mean_2 + abs(vmacro_accept_mcmc_array(all_loop - 1, walker) - vmacro_mean)**2.0D0
+                vmacro_variance = vmacro_diff_mean_2/(all_loop - 1.0D0)
+                vmacro_stand_dev = SQRT(vmacro_variance)
+                
+                q_1_sum = q_1_sum + q_1_accept_mcmc_array(all_loop - 1, walker)
+                q_1_mean = q_1_sum/all_loop
+                q_1_diff_mean_2 = q_1_diff_mean_2 + abs(q_1_accept_mcmc_array(all_loop - 1, walker) - q_1_mean)**2.0D0
+                q_1_variance = q_1_diff_mean_2/(all_loop - 1.0D0)
+                q_1_stand_dev = SQRT(q_1_variance)
+                
+                q_2_sum = q_2_sum + q_2_accept_mcmc_array(all_loop - 1, walker)
+                q_2_mean = q_2_sum/all_loop
+                q_2_diff_mean_2 = q_2_diff_mean_2 + abs(q_2_accept_mcmc_array(all_loop - 1, walker) - q_2_mean)**2.0D0
+                q_2_variance = q_2_diff_mean_2/(all_loop - 1.0D0)
+                q_2_stand_dev = SQRT(q_2_variance)
+                
+                K_amp_sum = K_amp_sum + K_amp_accept_mcmc_array(all_loop - 1, walker)
+                K_amp_mean = K_amp_sum/all_loop
+                K_amp_diff_mean_2 = K_amp_diff_mean_2 + abs(K_amp_accept_mcmc_array(all_loop - 1, walker) - K_amp_mean)**2.0D0
+                K_amp_variance = K_amp_diff_mean_2/(all_loop - 1.0D0)
+                K_amp_stand_dev = SQRT(K_amp_variance)
+                
+                Impact_sum = Impact_sum + Impact_accept_mcmc_array(all_loop - 1, walker)
+                Impact_mean = Impact_sum/all_loop
+                Impact_diff_mean_2 = Impact_diff_mean_2 + abs(Impact_accept_mcmc_array(all_loop - 1, walker) - Impact_mean)**2.0D0
+                Impact_variance = Impact_diff_mean_2/(all_loop - 1.0D0)
+                Impact_stand_dev = SQRT(Impact_variance)
+                
+                Rorb_Rs_sum = Rorb_Rs_sum + Rorb_Rs_accept_mcmc_array(all_loop - 1, walker)
+                Rorb_Rs_mean = Rorb_Rs_sum/all_loop
+                Rorb_Rs_diff_mean_2 = Rorb_Rs_diff_mean_2 + abs(Rorb_Rs_accept_mcmc_array(all_loop - 1, walker) - Rorb_Rs_mean)**2.0D0
+                Rorb_Rs_variance = Rorb_Rs_diff_mean_2/(all_loop - 1.0D0)
+                Rorb_Rs_stand_dev = SQRT(Rorb_Rs_variance)
 
                 vsini_accept_mcmc_array(all_loop, walker) = vsini_accept_mcmc_array(all_loop - 1, walker)
                 vsini_variance_current_array(all_loop, walker) = vsini_variance             !The variance updated at every iteration.
@@ -3043,6 +3853,13 @@ DO CONCURRENT (walker = 1:number_mcmc_walkers)
                 Ecc_accept_mcmc_array(all_loop, walker) = Ecc_accept_mcmc_array(all_loop - 1, walker)
                 Inc_accept_mcmc_array(all_loop, walker) = Inc_accept_mcmc_array(all_loop - 1, walker)
                 omega_arg_periastron_accept_mcmc_array(all_loop, walker) = omega_arg_periastron_accept_mcmc_array(all_loop - 1, walker)
+                omega_arg_periastron_sorted_array(all_loop, walker) = omega_arg_periastron_accept_mcmc_array(all_loop - 1, walker)
+                vmacro_accept_mcmc_array(all_loop, walker) = vmacro_accept_mcmc_array(all_loop - 1, walker)
+                q_1_accept_mcmc_array(all_loop, walker) = q_1_accept_mcmc_array(all_loop - 1, walker)
+                q_2_accept_mcmc_array(all_loop, walker) = q_2_accept_mcmc_array(all_loop - 1, walker)
+                K_amp_accept_mcmc_array(all_loop, walker) = K_amp_accept_mcmc_array(all_loop - 1, walker)
+                Impact_accept_mcmc_array(all_loop, walker) = Impact_accept_mcmc_array(all_loop - 1, walker)
+                Rorb_Rs_accept_mcmc_array(all_loop, walker) = Rorb_Rs_accept_mcmc_array(all_loop - 1, walker)
                 
                 vsini_variance_MCMC_array(all_loop, walker) = vsini_variance_MCMC           !The variance updated every 100 iterations.
                 vsini_stand_dev_MCMC_array(all_loop, walker) = vsini_stand_dev_MCMC         !The standard deviation updated every 100 iterations.
@@ -3093,6 +3910,18 @@ DO CONCURRENT (walker = 1:number_mcmc_walkers)
             PRINT *, "RV_zero_offset_mean: ", RV_zero_offset_mean
             PRINT *, "RV_offset_datasets: ", RV_offset_datasets
             PRINT *, "RV_offset_datasets_mean: ", RV_offset_datasets_mean
+            PRINT *, "vmacro: ", vmacro
+            PRINT *, "vmacro_mean: ", vmacro_mean
+            PRINT *, "q_1: ", q_1
+            PRINT *, "q_1_mean: ", q_1_mean
+            PRINT *, "q_2: ", q_2
+            PRINT *, "q_2_mean: ", q_2_mean
+            PRINT *, "K_amp: ", K_amp
+            PRINT *, "K_amp_mean: ", K_amp_mean        
+            PRINT *, "Impact: ", Impact
+            PRINT *, "Impact_mean: ", Impact_mean 
+            PRINT *, "Rorb_Rs: ", Rorb_Rs
+            PRINT *, "Rorb_Rs_mean: ", Rorb_Rs_mean 
             PRINT *, "vsini: ", vsini
             PRINT *, "vsini_mean: ", vsini_mean
             PRINT *, "vsini standard deviation MCMC: ", vsini_stand_dev_MCMC
@@ -3189,16 +4018,27 @@ DO CONCURRENT (walker = 1:number_mcmc_walkers)
         omega_arg_periastron_draw_loop = omega_arg_periastron_draw_loop + 1
         RV_zero_offset_draw_loop = RV_zero_offset_draw_loop + 1
         stellar_rotation_angle_draw_loop = stellar_rotation_angle_draw_loop + 1
+        vmacro_draw_loop = vmacro_draw_loop + 1
+        q_1_draw_loop = q_1_draw_loop + 1
+        q_2_draw_loop = q_2_draw_loop + 1
+        K_amp_draw_loop = K_amp_draw_loop + 1
+        Impact_draw_loop = Impact_draw_loop + 1
+        Rorb_Rs_draw_loop = Rorb_Rs_draw_loop + 1
         
     END DO
     
 !**************************************************************End of MCMC Walker iteration***********************************************************************************!    
+
+    
+
     
     walker_parameter_array(1, walker) = reject_counter
     walker_parameter_array(2, walker) = all_loop - 1
     walker_parameter_array(3, walker) = MCMC_loop - 1
     walker_parameter_array(4, walker) = accept_rate
     walker_parameter_array(5, walker) = scale_factor
+    
+    count_mask = count(mask_array(1:all_loop - 1, walker))
     
     PRINT *, "number of accepted MCMC iterations: ", MCMC_loop - 1
     PRINT *, "number of iterations in total: ", all_loop - 1
@@ -3279,6 +4119,30 @@ DO CONCURRENT (walker = 1:number_mcmc_walkers)
     walker_parameter_array_chi2(12, walker) = best_omega_arg_periastron_chi2
     PRINT *, "The best argument of periastron angle corresponding to the lowest value of chi squared: ", best_omega_arg_periastron_chi2, "deg", " for walker number ", walker
     
+    best_vmacro_chi2 = vmacro_accept_mcmc_array(loc_min_chi_squared_MCMC(walker), walker)
+    walker_parameter_array_chi2(15, walker) = best_vmacro_chi2
+    PRINT *, "The best vmacro value corresponding to the lowest value of chi squared: ", best_vmacro_chi2, " for walker number ", walker
+    
+    best_q_1_chi2 = q_1_accept_mcmc_array(loc_min_chi_squared_MCMC(walker), walker)
+    walker_parameter_array_chi2(16, walker) = best_q_1_chi2
+    PRINT *, "The best q_1 value corresponding to the lowest value of chi squared: ", best_q_1_chi2, " for walker number ", walker
+    
+    best_q_2_chi2 = q_2_accept_mcmc_array(loc_min_chi_squared_MCMC(walker), walker)
+    walker_parameter_array_chi2(17, walker) = best_q_2_chi2
+    PRINT *, "The best q_2 value corresponding to the lowest value of chi squared: ", best_q_2_chi2, "deg", " for walker number ", walker
+    
+    best_K_amp_chi2 = K_amp_accept_mcmc_array(loc_min_chi_squared_MCMC(walker), walker)
+    walker_parameter_array_chi2(18, walker) = best_K_amp_chi2
+    PRINT *, "The best K_amp value corresponding to the lowest value of chi squared: ", best_K_amp_chi2, "deg", " for walker number ", walker
+    
+    best_Impact_chi2 = Impact_accept_mcmc_array(loc_min_chi_squared_MCMC(walker), walker)
+    walker_parameter_array_chi2(19, walker) = best_Impact_chi2
+    PRINT *, "The best Impact value corresponding to the lowest value of chi squared: ", best_Impact_chi2, " for walker number ", walker
+    
+    best_Rorb_Rs_chi2 = Rorb_Rs_accept_mcmc_array(loc_min_chi_squared_MCMC(walker), walker)
+    walker_parameter_array_chi2(20, walker) = best_Rorb_Rs_chi2
+    PRINT *, "The best Rorb_Rs value corresponding to the lowest value of chi squared: ", best_Rorb_Rs_chi2, " for walker number ", walker
+    
     best_vsini_chi2 = vsini_accept_mcmc_array(loc_min_chi_squared_MCMC(walker), walker)
     walker_parameter_array_chi2(13, walker) = best_vsini_chi2
     PRINT *, "The best vsini value corresponding to the lowest value of chi squared: ", best_vsini_chi2, "m/s", " for walker number ", walker
@@ -3286,8 +4150,6 @@ DO CONCURRENT (walker = 1:number_mcmc_walkers)
     best_spin_orbit_chi2 = stellar_rotation_angle_accept_mcmc_array(loc_min_chi_squared_MCMC(walker), walker)
     walker_parameter_array_chi2(14, walker) = best_spin_orbit_chi2
     PRINT *, "The best spin-orbit angle corresponding to the lowest value of chi squared: ", best_spin_orbit_chi2, "deg", " for walker number ", walker
-    
-    
     
     
     !Determine the best vsini and lambda from the mean of the MCMC runs.
@@ -3347,10 +4209,55 @@ DO CONCURRENT (walker = 1:number_mcmc_walkers)
     Inc_mean = Inc_sum2(walker)/(all_loop - 1.0D0)
     walker_parameter_array_mean(11, walker) = Inc_mean
     
+    !Allocate(omega_arg_periastron_sorted_array(count_mask))
     omega_arg_periastron_sum2 = sum(omega_arg_periastron_accept_mcmc_array, dim=1, mask=mask_array)
     PRINT *, "omega_arg_periastron_sum2: ", omega_arg_periastron_sum2
-    omega_arg_periastron_mean = omega_arg_periastron_sum2(walker)/(all_loop - 1.0D0)
+    !omega_arg_periastron_mean = omega_arg_periastron_sum2(walker)/(all_loop - 1.0D0)
+    !CALL Selection_sort(omega_arg_periastron_accept_mcmc_array(1:count_mask, walker), index_array)
+    IF (omega_arg_periastron_fixed == 'N') THEN
+        CALL Insertion_Sort(omega_arg_periastron_sorted_array(1:count_mask, walker))
+    END IF
+    !DO l = 1, count_mask
+    !    omega_arg_periastron_sorted_array(l) = omega_arg_periastron_accept_mcmc_array(index_array(l), walker)
+    !END DO
+    IF (MOD(count_mask, 2_INT64) == 0) THEN           ! compute the median
+       omega_arg_periastron_mean = (omega_arg_periastron_sorted_array(count_mask/2, walker) + omega_arg_periastron_sorted_array(count_mask/2+1, walker)) / 2.0D0
+    ELSE
+       omega_arg_periastron_mean = omega_arg_periastron_sorted_array(count_mask/2+1, walker)
+    END IF
+    !omega_arg_periastron_mean = Median(omega_arg_periastron_accept_mcmc_array(1:count_mask, walker), count_mask)
     walker_parameter_array_mean(12, walker) = omega_arg_periastron_mean
+    !DEALLOCATE(omega_arg_periastron_sorted_array)
+    
+    vmacro_sum2 = sum(vmacro_accept_mcmc_array, dim=1, mask=mask_array)
+    PRINT *, "vmacro_sum2: ", vmacro_sum2
+    vmacro_mean = vmacro_sum2(walker)/(all_loop - 1.0D0)
+    walker_parameter_array_mean(15, walker) = vmacro_mean
+    
+    q_1_sum2 = sum(q_1_accept_mcmc_array, dim=1, mask=mask_array)
+    PRINT *, "q_1_sum2: ", q_1_sum2
+    q_1_mean = q_1_sum2(walker)/(all_loop - 1.0D0)
+    walker_parameter_array_mean(16, walker) = q_1_mean
+    
+    q_2_sum2 = sum(q_2_accept_mcmc_array, dim=1, mask=mask_array)
+    PRINT *, "q_2_sum2: ", q_2_sum2
+    q_2_mean = q_2_sum2(walker)/(all_loop - 1.0D0)
+    walker_parameter_array_mean(17, walker) = q_2_mean
+    
+    K_amp_sum2 = sum(K_amp_accept_mcmc_array, dim=1, mask=mask_array)
+    PRINT *, "K_amp_sum2: ", K_amp_sum2
+    K_amp_mean = K_amp_sum2(walker)/(all_loop - 1.0D0)
+    walker_parameter_array_mean(18, walker) = K_amp_mean
+    
+    Impact_sum2 = sum(Impact_accept_mcmc_array, dim=1, mask=mask_array)
+    PRINT *, "Impact_sum2: ", Impact_sum2
+    Impact_mean = Impact_sum2(walker)/(all_loop - 1.0D0)
+    walker_parameter_array_mean(19, walker) = Impact_mean
+    
+    Rorb_Rs_sum2 = sum(Rorb_Rs_accept_mcmc_array, dim=1, mask=mask_array)
+    PRINT *, "Rorb_Rs_sum2: ", Rorb_Rs_sum2
+    Rorb_Rs_mean = Rorb_Rs_sum2(walker)/(all_loop - 1.0D0)
+    walker_parameter_array_mean(20, walker) = Rorb_Rs_mean
     
     vsini_sum2 = sum(vsini_accept_mcmc_array, dim=1, mask=mask_array)
     PRINT *, "vsini_sum2: ", vsini_sum2
@@ -3361,9 +4268,6 @@ DO CONCURRENT (walker = 1:number_mcmc_walkers)
     PRINT *, "stellar_rotation_angle_sum2: ", stellar_rotation_angle_sum2
     stellar_rotation_angle_mean = stellar_rotation_angle_sum2(walker)/(all_loop - 1.0D0)
     walker_parameter_array_mean(14, walker) = stellar_rotation_angle_mean
-    
-    
-    
     
     !Calculate the standard deviation from the unweighted means.
     vsini_variance = 0.0D0  !reset to zero.
@@ -3380,6 +4284,13 @@ DO CONCURRENT (walker = 1:number_mcmc_walkers)
     Ecc_variance = 0.0D0
     Inc_variance = 0.0D0
     omega_arg_periastron_variance = 0.0D0
+    vmacro_variance = 0.0D0
+    q_1_variance = 0.0D0
+    q_2_variance = 0.0D0
+    K_amp_variance = 0.0D0
+    Impact_variance = 0.0D0
+    Rorb_Rs_variance = 0.0D0
+    
     DO l = 1, all_loop - 1
         vsini_variance = vsini_variance + abs(vsini_accept_mcmc_array(l, walker) - vsini_mean)**2.0D0
         stellar_rotation_angle_variance = stellar_rotation_angle_variance + abs(stellar_rotation_angle_accept_mcmc_array(l, walker) &
@@ -3397,7 +4308,22 @@ DO CONCURRENT (walker = 1:number_mcmc_walkers)
         Rp_Rs_ratio_variance = Rp_Rs_ratio_variance + abs(Rp_Rs_ratio_accept_mcmc_array(l, walker) - Rp_Rs_ratio_mean)**2.0D0
         Ecc_variance = Ecc_variance + abs(Ecc_accept_mcmc_array(l, walker) - Ecc_mean)**2.0D0
         Inc_variance = Inc_variance + abs(Inc_accept_mcmc_array(l, walker) - Inc_mean)**2.0D0
-        omega_arg_periastron_variance = omega_arg_periastron_variance + abs(omega_arg_periastron_accept_mcmc_array(l, walker) - omega_arg_periastron_mean)**2.0D0
+        !omega_arg_periastron_variance = omega_arg_periastron_variance + abs(omega_arg_periastron_accept_mcmc_array(l, walker) - omega_arg_periastron_mean)**2.0D0
+        
+        IF ((omega_arg_periastron_accept_mcmc_array(l, walker) >= 0.0D0) .AND. (omega_arg_periastron_accept_mcmc_array(l, walker) <= 90.0D0) .AND. (omega_arg_periastron_mean >= 270.0D0)) THEN
+            omega_arg_periastron_variance = omega_arg_periastron_variance + abs((360.0D0 + omega_arg_periastron_accept_mcmc_array(l, walker)) - omega_arg_periastron_mean)**2.0D0
+        ELSE IF ((omega_arg_periastron_mean >= 0.0D0) .AND. (omega_arg_periastron_mean <= 90.0D0) .AND. (omega_arg_periastron_accept_mcmc_array(l, walker) >= 270.0D0)) THEN
+            omega_arg_periastron_variance = omega_arg_periastron_variance + abs((omega_arg_periastron_accept_mcmc_array(l, walker) - 360.0D0) - omega_arg_periastron_mean)**2.0D0
+        ELSE
+            omega_arg_periastron_variance = omega_arg_periastron_variance + abs(omega_arg_periastron_accept_mcmc_array(l, walker) - omega_arg_periastron_mean)**2.0D0
+        END IF
+        
+        vmacro_variance = vmacro_variance + abs(vmacro_accept_mcmc_array(l, walker) - vmacro_mean)**2.0D0
+        q_1_variance = q_1_variance + abs(q_1_accept_mcmc_array(l, walker) - q_1_mean)**2.0D0
+        q_2_variance = q_2_variance + abs(q_2_accept_mcmc_array(l, walker) - q_2_mean)**2.0D0
+        K_amp_variance = K_amp_variance + abs(K_amp_accept_mcmc_array(l, walker) - K_amp_mean)**2.0D0
+        Impact_variance = Impact_variance + abs(Impact_accept_mcmc_array(l, walker) - Impact_mean)**2.0D0
+        Rorb_Rs_variance = Rorb_Rs_variance + abs(Rorb_Rs_accept_mcmc_array(l, walker) - Rorb_Rs_mean)**2.0D0
     END DO
     
     walker_parameter_array_variance(1, walker) = RV_offset_datasets_variance
@@ -3413,6 +4339,12 @@ DO CONCURRENT (walker = 1:number_mcmc_walkers)
     walker_parameter_array_variance(12, walker) = omega_arg_periastron_variance
     walker_parameter_array_variance(13, walker) = vsini_variance
     walker_parameter_array_variance(14, walker) = stellar_rotation_angle_variance
+    walker_parameter_array_variance(15, walker) = vmacro_variance
+    walker_parameter_array_variance(16, walker) = q_1_variance
+    walker_parameter_array_variance(17, walker) = q_2_variance
+    walker_parameter_array_variance(18, walker) = K_amp_variance
+    walker_parameter_array_variance(19, walker) = Impact_variance
+    walker_parameter_array_variance(20, walker) = Rorb_Rs_variance
     
     
     
@@ -3431,6 +4363,12 @@ DO CONCURRENT (walker = 1:number_mcmc_walkers)
     Ecc_stand_dev = SQRT(Ecc_variance/(all_loop - 1.0D0))
     Inc_stand_dev = SQRT(Inc_variance/(all_loop - 1.0D0))
     omega_arg_periastron_stand_dev = SQRT(omega_arg_periastron_variance/(all_loop - 1.0D0))
+    vmacro_stand_dev = SQRT(vmacro_variance/(all_loop - 1.0D0))
+    q_1_stand_dev = SQRT(q_1_variance/(all_loop - 1.0D0))
+    q_2_stand_dev = SQRT(q_2_variance/(all_loop - 1.0D0))
+    K_amp_stand_dev = SQRT(K_amp_variance/(all_loop - 1.0D0))
+    Impact_stand_dev = SQRT(Impact_variance/(all_loop - 1.0D0))
+    Rorb_Rs_stand_dev = SQRT(Rorb_Rs_variance/(all_loop - 1.0D0))
     
     walker_parameter_array_stand_dev(1, walker) = RV_offset_datasets_stand_dev
     walker_parameter_array_stand_dev(2, walker) = RV_zero_offset_stand_dev
@@ -3445,6 +4383,12 @@ DO CONCURRENT (walker = 1:number_mcmc_walkers)
     walker_parameter_array_stand_dev(12, walker) = omega_arg_periastron_stand_dev
     walker_parameter_array_stand_dev(13, walker) = vsini_stand_dev
     walker_parameter_array_stand_dev(14, walker) = stellar_rotation_angle_stand_dev
+    walker_parameter_array_stand_dev(15, walker) = vmacro_stand_dev
+    walker_parameter_array_stand_dev(16, walker) = q_1_stand_dev
+    walker_parameter_array_stand_dev(17, walker) = q_2_stand_dev
+    walker_parameter_array_stand_dev(18, walker) = K_amp_stand_dev
+    walker_parameter_array_stand_dev(19, walker) = Impact_stand_dev
+    walker_parameter_array_stand_dev(20, walker) = Rorb_Rs_stand_dev
 
     PRINT *, 'vsini_mean: ', vsini_mean
     PRINT *, 'vsini_stand_dev: ', vsini_stand_dev
@@ -3488,6 +4432,21 @@ DO CONCURRENT (walker = 1:number_mcmc_walkers)
     PRINT *, 'omega_arg_periastron_mean: ', omega_arg_periastron_mean
     PRINT *, 'omega_arg_periastron_stand_dev: ', omega_arg_periastron_stand_dev
     
+    PRINT *, 'vmacro_mean: ', vmacro_mean
+    PRINT *, 'vmacro_stand_dev: ', vmacro_stand_dev
+    
+    PRINT *, 'q_1_mean: ', q_1_mean
+    PRINT *, 'q_1_stand_dev: ', q_1_stand_dev
+    
+    PRINT *, 'q_2_mean: ', q_2_mean
+    PRINT *, 'q_2_stand_dev: ', q_2_stand_dev
+    
+    PRINT *, 'Impact_mean: ', Impact_mean
+    PRINT *, 'Impact_stand_dev: ', Impact_stand_dev
+    
+    PRINT *, 'Rorb_Rs_mean: ', Rorb_Rs_mean
+    PRINT *, 'Rorb_Rs_stand_dev: ', Rorb_Rs_stand_dev
+    
 
 
     
@@ -3498,6 +4457,8 @@ DO CONCURRENT (walker = 1:number_mcmc_walkers)
     PRINT *," "
     
     !stop
+    
+    !DEALLOCATE(omega_arg_periastron_sorted_array)
 
 END DO
 
@@ -3570,6 +4531,24 @@ PRINT *, "The best vsini value corresponding to the lowest value of chi squared:
 best_spin_orbit_chi2_all_walkers = stellar_rotation_angle_accept_mcmc_array(loc_min_chi_squared_all_walkers(1), loc_min_chi_squared_all_walkers(2))
 PRINT *, "The best spin-orbit angle corresponding to the lowest value of chi squared: ", best_spin_orbit_chi2_all_walkers, "deg"
 
+best_vmacro_chi2_all_walkers = vmacro_accept_mcmc_array(loc_min_chi_squared_all_walkers(1), loc_min_chi_squared_all_walkers(2))
+PRINT *, "The best vmacro corresponding to the lowest value of chi squared: ", best_vmacro_chi2_all_walkers, "km/s"
+
+best_q_1_chi2_all_walkers = q_1_accept_mcmc_array(loc_min_chi_squared_all_walkers(1), loc_min_chi_squared_all_walkers(2))
+PRINT *, "The best q_1 corresponding to the lowest value of chi squared: ", best_q_1_chi2_all_walkers
+
+best_q_2_chi2_all_walkers = q_2_accept_mcmc_array(loc_min_chi_squared_all_walkers(1), loc_min_chi_squared_all_walkers(2))
+PRINT *, "The best q_2 corresponding to the lowest value of chi squared: ", best_q_2_chi2_all_walkers
+
+best_K_amp_chi2_all_walkers = K_amp_accept_mcmc_array(loc_min_chi_squared_all_walkers(1), loc_min_chi_squared_all_walkers(2))
+PRINT *, "The best K_amp corresponding to the lowest value of chi squared: ", best_K_amp_chi2_all_walkers
+
+best_Impact_chi2_all_walkers = Impact_accept_mcmc_array(loc_min_chi_squared_all_walkers(1), loc_min_chi_squared_all_walkers(2))
+PRINT *, "The best Impact corresponding to the lowest value of chi squared: ", best_Impact_chi2_all_walkers
+
+best_Rorb_Rs_chi2_all_walkers = Rorb_Rs_accept_mcmc_array(loc_min_chi_squared_all_walkers(1), loc_min_chi_squared_all_walkers(2))
+PRINT *, "The best Rorb_Rs corresponding to the lowest value of chi squared: ", best_Rorb_Rs_chi2_all_walkers
+
 
 
 
@@ -3621,7 +4600,42 @@ Inc_mean2 = Inc_sum3/(total_loop - 1.0D0)
 
 omega_arg_periastron_sum3 = sum(omega_arg_periastron_accept_mcmc_array, mask=mask_array)
 PRINT *, "omega_arg_periastron_sum3: ", omega_arg_periastron_sum3
-omega_arg_periastron_mean2 = omega_arg_periastron_sum3/(total_loop - 1.0D0)
+!omega_arg_periastron_mean2 = omega_arg_periastron_sum3/(total_loop - 1.0D0)
+Allocate(omega_arg_periastron_sorted_array2(number_mcmc_walkers))
+CALL Selection_sort(walker_parameter_array_mean(12, 1:number_mcmc_walkers), index_array)
+DO l = 1, number_mcmc_walkers
+    omega_arg_periastron_sorted_array2(l) = walker_parameter_array_mean(12, index_array(l))
+END DO
+IF (MOD(number_mcmc_walkers, 2_INT64) == 0) THEN           ! compute the median
+   omega_arg_periastron_mean2 = (omega_arg_periastron_sorted_array2(number_mcmc_walkers/2) + omega_arg_periastron_sorted_array2(number_mcmc_walkers/2+1)) / 2.0D0
+ELSE
+   omega_arg_periastron_mean2 = omega_arg_periastron_sorted_array2(number_mcmc_walkers/2+1)
+END IF
+DEALLOCATE(omega_arg_periastron_sorted_array2)
+
+vmacro_sum3 = sum(vmacro_accept_mcmc_array, mask=mask_array)
+PRINT *, "vmacro_sum3: ", vmacro_sum3
+vmacro_mean2 = vmacro_sum3/(total_loop - 1.0D0)
+
+q_1_sum3 = sum(q_1_accept_mcmc_array, mask=mask_array)
+PRINT *, "q_1_sum3: ", q_1_sum3
+q_1_mean2 = q_1_sum3/(total_loop - 1.0D0)
+
+q_2_sum3 = sum(q_2_accept_mcmc_array, mask=mask_array)
+PRINT *, "q_2_sum3: ", q_2_sum3
+q_2_mean2 = q_2_sum3/(total_loop - 1.0D0)
+
+K_amp_sum3 = sum(K_amp_accept_mcmc_array, mask=mask_array)
+PRINT *, "K_amp_sum3: ", K_amp_sum3
+K_amp_mean2 = K_amp_sum3/(total_loop - 1.0D0)
+
+Impact_sum3 = sum(Impact_accept_mcmc_array, mask=mask_array)
+PRINT *, "Impact_sum3: ", Impact_sum3
+Impact_mean2 = Impact_sum3/(total_loop - 1.0D0)
+
+Rorb_Rs_sum3 = sum(Rorb_Rs_accept_mcmc_array, mask=mask_array)
+PRINT *, "Rorb_Rs_sum3: ", Rorb_Rs_sum3
+Rorb_Rs_mean2 = Rorb_Rs_sum3/(total_loop - 1.0D0)
 
 vsini_sum3 = sum(vsini_accept_mcmc_array, mask=mask_array)
 PRINT *, "vsini_sum3: ", vsini_sum3
@@ -3649,6 +4663,12 @@ Rp_Rs_ratio_variance = 0.0D0
 Ecc_variance = 0.0D0
 Inc_variance = 0.0D0
 omega_arg_periastron_variance = 0.0D0
+vmacro_variance = 0.0D0
+q_1_variance = 0.0D0
+q_2_variance = 0.0D0
+K_amp_variance = 0.0D0
+Impact_variance = 0.0D0
+Rorb_Rs_variance = 0.0D0
 DO i = 1, number_mcmc_walkers
     DO l = 1, NINT(mcmc_accepted_iteration_size/0.05)
         IF (mask_array(l, i) .EQV. .TRUE.) THEN
@@ -3668,7 +4688,20 @@ DO i = 1, number_mcmc_walkers
             Rp_Rs_ratio_variance = Rp_Rs_ratio_variance + abs(Rp_Rs_ratio_accept_mcmc_array(l, i) - Rp_Rs_ratio_mean2)**2.0D0
             Ecc_variance = Ecc_variance + abs(Ecc_accept_mcmc_array(l, i) - Ecc_mean2)**2.0D0
             Inc_variance = Inc_variance + abs(Inc_accept_mcmc_array(l, i) - Inc_mean2)**2.0D0
-            omega_arg_periastron_variance = omega_arg_periastron_variance + abs(omega_arg_periastron_accept_mcmc_array(l, i) - omega_arg_periastron_mean2)**2.0D0
+            !omega_arg_periastron_variance = omega_arg_periastron_variance + abs(omega_arg_periastron_accept_mcmc_array(l, i) - omega_arg_periastron_mean2)**2.0D0
+            IF ((omega_arg_periastron_accept_mcmc_array(l, i) >= 0.0D0) .AND. (omega_arg_periastron_accept_mcmc_array(l, i) <= 90.0D0) .AND. (omega_arg_periastron_mean2 >= 270.0D0)) THEN
+                omega_arg_periastron_variance = omega_arg_periastron_variance + abs((360.0D0 + omega_arg_periastron_accept_mcmc_array(l, i)) - omega_arg_periastron_mean2)**2.0D0
+            ELSE IF ((omega_arg_periastron_mean2 >= 0.0D0) .AND. (omega_arg_periastron_mean2 <= 90.0D0) .AND. (omega_arg_periastron_accept_mcmc_array(l, i) >= 270.0D0)) THEN
+                omega_arg_periastron_variance = omega_arg_periastron_variance + abs((omega_arg_periastron_accept_mcmc_array(l, i) - 360.0D0) - omega_arg_periastron_mean2)**2.0D0
+            ELSE
+                omega_arg_periastron_variance = omega_arg_periastron_variance + abs(omega_arg_periastron_accept_mcmc_array(l, i) - omega_arg_periastron_mean2)**2.0D0
+            END IF
+            vmacro_variance = vmacro_variance + abs(vmacro_accept_mcmc_array(l, i) - vmacro_mean2)**2.0D0
+            q_1_variance = q_1_variance + abs(q_1_accept_mcmc_array(l, i) - q_1_mean2)**2.0D0
+            q_2_variance = q_2_variance + abs(q_2_accept_mcmc_array(l, i) - q_2_mean2)**2.0D0
+            K_amp_variance = K_amp_variance + abs(K_amp_accept_mcmc_array(l, i) - K_amp_mean2)**2.0D0
+            Impact_variance = Impact_variance + abs(Impact_accept_mcmc_array(l, i) - Impact_mean2)**2.0D0
+            Rorb_Rs_variance = Rorb_Rs_variance + abs(Rorb_Rs_accept_mcmc_array(l, i) - Rorb_Rs_mean2)**2.0D0
         END IF
     END DO
 END DO
@@ -3690,6 +4723,12 @@ Rp_Rs_ratio_stand_dev = SQRT(Rp_Rs_ratio_variance/(total_loop - 1.0D0))
 Ecc_stand_dev = SQRT(Ecc_variance/(total_loop - 1.0D0))
 Inc_stand_dev = SQRT(Inc_variance/(total_loop - 1.0D0))
 omega_arg_periastron_stand_dev = SQRT(omega_arg_periastron_variance/(total_loop - 1.0D0))
+vmacro_stand_dev = SQRT(vmacro_variance/(total_loop - 1.0D0))
+q_1_stand_dev = SQRT(q_1_variance/(total_loop - 1.0D0))
+q_2_stand_dev = SQRT(q_2_variance/(total_loop - 1.0D0))
+K_amp_stand_dev = SQRT(K_amp_variance/(total_loop - 1.0D0))
+Impact_stand_dev = SQRT(Impact_variance/(total_loop - 1.0D0))
+Rorb_Rs_stand_dev = SQRT(Rorb_Rs_variance/(total_loop - 1.0D0))
 
 PRINT *, 'vsini_mean all walkers: ', vsini_mean2
 PRINT *, 'vsini_stand_dev all walkers: ', vsini_stand_dev
@@ -3732,6 +4771,24 @@ PRINT *, 'Inc_stand_dev all walkers: ', Inc_stand_dev
 
 PRINT *, 'omega_arg_periastron_mean all walkers: ', omega_arg_periastron_mean2
 PRINT *, 'omega_arg_periastron_stand_dev all walkers: ', omega_arg_periastron_stand_dev
+
+PRINT *, 'vmacro_mean all walkers: ', vmacro_mean2
+PRINT *, 'vmacro_stand_dev all walkers: ', vmacro_stand_dev
+
+PRINT *, 'q_1_mean all walkers: ', q_1_mean2
+PRINT *, 'q_1_stand_dev all walkers: ', q_1_stand_dev
+
+PRINT *, 'q_2_mean all walkers: ', q_2_mean2
+PRINT *, 'q_2_stand_dev all walkers: ', q_2_stand_dev
+
+PRINT *, 'K_amp_mean all walkers: ', K_amp_mean2
+PRINT *, 'K_amp_stand_dev all walkers: ', K_amp_stand_dev
+
+PRINT *, 'Impact_mean all walkers: ', Impact_mean2
+PRINT *, 'Impact_stand_dev all walkers: ', Impact_stand_dev
+
+PRINT *, 'Rorb_Rs_mean all walkers: ', Rorb_Rs_mean2
+PRINT *, 'Rorb_Rs_stand_dev all walkers: ', Rorb_Rs_stand_dev
     
     
     
@@ -3739,6 +4796,9 @@ PRINT *, 'omega_arg_periastron_stand_dev all walkers: ', omega_arg_periastron_st
 !STOP
 
 !*****************************************************************************************************************************************
+
+
+
 
 !Write the mask array indicating which values in the arrays to use.
 OPEN(unit=99, FILE=output_mask_array_filename, status='replace', action='write')
@@ -4260,6 +5320,186 @@ DO l = 1, NINT(mcmc_accepted_iteration_size/0.05)
 END DO 
 CLOSE(99)
 
+!Write output file of the vmacro array from accepted proposals.
+OPEN(unit=99, FILE=output_vmacro_MCMC_array_filename, status='replace', action='write')
+!Now write the vmacro array line by line into a file.
+DO l = 1, NINT(mcmc_accepted_iteration_size/0.05)
+    DO i = 1, number_mcmc_walkers
+        IF (i == 1) THEN
+            WRITE (99, "(F15.6)", advance='no') vmacro_accept_mcmc_array(l, 1)
+        ELSE
+            WRITE (99, "(1X, F15.6)", advance='no') vmacro_accept_mcmc_array(l, i)
+        END IF        
+    END DO
+    WRITE (99, "(A1)", advance='yes') blank
+END DO 
+CLOSE(99) 
+            
+!Write output file of the vmacro array from accepted proposals.
+OPEN(unit=99, FILE=output_vmacro_all_array_filename, status='replace', action='write')
+!Now write the vmacro array line by line into a file.
+DO l = 1, NINT(mcmc_accepted_iteration_size/0.05)
+    DO i = 1, number_mcmc_walkers
+        IF (i == 1) THEN
+            WRITE (99, "(F15.6)", advance='no') vmacro_all_mcmc_array(l, 1)
+        ELSE
+            WRITE (99, "(1X, F15.6)", advance='no') vmacro_all_mcmc_array(l, i)
+        END IF        
+    END DO
+    WRITE (99, "(A1)", advance='yes') blank
+END DO 
+CLOSE(99)
+
+!Write output file of the q_1 array from accepted proposals.
+OPEN(unit=99, FILE=output_q_1_MCMC_array_filename, status='replace', action='write')
+!Now write the q_1 array line by line into a file.
+DO l = 1, NINT(mcmc_accepted_iteration_size/0.05)
+    DO i = 1, number_mcmc_walkers
+        IF (i == 1) THEN
+            WRITE (99, "(F15.6)", advance='no') q_1_accept_mcmc_array(l, 1)
+        ELSE
+            WRITE (99, "(1X, F15.6)", advance='no') q_1_accept_mcmc_array(l, i)
+        END IF        
+    END DO
+    WRITE (99, "(A1)", advance='yes') blank
+END DO 
+CLOSE(99) 
+            
+!Write output file of the q_1 array from accepted proposals.
+OPEN(unit=99, FILE=output_q_1_all_array_filename, status='replace', action='write')
+!Now write the q_1 array line by line into a file.
+DO l = 1, NINT(mcmc_accepted_iteration_size/0.05)
+    DO i = 1, number_mcmc_walkers
+        IF (i == 1) THEN
+            WRITE (99, "(F15.6)", advance='no') q_1_all_mcmc_array(l, 1)
+        ELSE
+            WRITE (99, "(1X, F15.6)", advance='no') q_1_all_mcmc_array(l, i)
+        END IF        
+    END DO
+    WRITE (99, "(A1)", advance='yes') blank
+END DO 
+CLOSE(99)
+
+!Write output file of the q_2 array from accepted proposals.
+OPEN(unit=99, FILE=output_q_2_MCMC_array_filename, status='replace', action='write')
+!Now write the q_2 array line by line into a file.
+DO l = 1, NINT(mcmc_accepted_iteration_size/0.05)
+    DO i = 1, number_mcmc_walkers
+        IF (i == 1) THEN
+            WRITE (99, "(F15.6)", advance='no') q_2_accept_mcmc_array(l, 1)
+        ELSE
+            WRITE (99, "(1X, F15.6)", advance='no') q_2_accept_mcmc_array(l, i)
+        END IF        
+    END DO
+    WRITE (99, "(A1)", advance='yes') blank
+END DO 
+CLOSE(99) 
+            
+!Write output file of the q_2 array from accepted proposals.
+OPEN(unit=99, FILE=output_q_2_all_array_filename, status='replace', action='write')
+!Now write the q_2 array line by line into a file.
+DO l = 1, NINT(mcmc_accepted_iteration_size/0.05)
+    DO i = 1, number_mcmc_walkers
+        IF (i == 1) THEN
+            WRITE (99, "(F15.6)", advance='no') q_2_all_mcmc_array(l, 1)
+        ELSE
+            WRITE (99, "(1X, F15.6)", advance='no') q_2_all_mcmc_array(l, i)
+        END IF        
+    END DO
+    WRITE (99, "(A1)", advance='yes') blank
+END DO 
+CLOSE(99)
+
+!Write output file of the K_amp array from accepted proposals.
+OPEN(unit=99, FILE=output_K_amp_MCMC_array_filename, status='replace', action='write')
+!Now write the K_amp array line by line into a file.
+DO l = 1, NINT(mcmc_accepted_iteration_size/0.05)
+    DO i = 1, number_mcmc_walkers
+        IF (i == 1) THEN
+            WRITE (99, "(F15.6)", advance='no') K_amp_accept_mcmc_array(l, 1)
+        ELSE
+            WRITE (99, "(1X, F15.6)", advance='no') K_amp_accept_mcmc_array(l, i)
+        END IF        
+    END DO
+    WRITE (99, "(A1)", advance='yes') blank
+END DO 
+CLOSE(99) 
+            
+!Write output file of the K_amp array from accepted proposals.
+OPEN(unit=99, FILE=output_K_amp_all_array_filename, status='replace', action='write')
+!Now write the K_amp array line by line into a file.
+DO l = 1, NINT(mcmc_accepted_iteration_size/0.05)
+    DO i = 1, number_mcmc_walkers
+        IF (i == 1) THEN
+            WRITE (99, "(F15.6)", advance='no') K_amp_all_mcmc_array(l, 1)
+        ELSE
+            WRITE (99, "(1X, F15.6)", advance='no') K_amp_all_mcmc_array(l, i)
+        END IF        
+    END DO
+    WRITE (99, "(A1)", advance='yes') blank
+END DO 
+CLOSE(99)            
+            
+!Write output file of the Impact array from accepted proposals.
+OPEN(unit=99, FILE=output_Impact_MCMC_array_filename, status='replace', action='write')
+!Now write the Impact array line by line into a file.
+DO l = 1, NINT(mcmc_accepted_iteration_size/0.05)
+    DO i = 1, number_mcmc_walkers
+        IF (i == 1) THEN
+            WRITE (99, "(F15.6)", advance='no') Impact_accept_mcmc_array(l, 1)
+        ELSE
+            WRITE (99, "(1X, F15.6)", advance='no') Impact_accept_mcmc_array(l, i)
+        END IF        
+    END DO
+    WRITE (99, "(A1)", advance='yes') blank
+END DO 
+CLOSE(99) 
+
+!Write output file of the Impact array from accepted proposals.
+OPEN(unit=99, FILE=output_Impact_all_array_filename, status='replace', action='write')
+!Now write the Impact array line by line into a file.
+DO l = 1, NINT(mcmc_accepted_iteration_size/0.05)
+    DO i = 1, number_mcmc_walkers
+        IF (i == 1) THEN
+            WRITE (99, "(F15.6)", advance='no') Impact_all_mcmc_array(l, 1)
+        ELSE
+            WRITE (99, "(1X, F15.6)", advance='no') Impact_all_mcmc_array(l, i)
+        END IF        
+    END DO
+    WRITE (99, "(A1)", advance='yes') blank
+END DO 
+CLOSE(99)
+
+!Write output file of the Rorb_Rs array from accepted proposals.
+OPEN(unit=99, FILE=output_Rorb_Rs_MCMC_array_filename, status='replace', action='write')
+!Now write the Rorb_Rs array line by line into a file.
+DO l = 1, NINT(mcmc_accepted_iteration_size/0.05)
+    DO i = 1, number_mcmc_walkers
+        IF (i == 1) THEN
+            WRITE (99, "(F15.6)", advance='no') Rorb_Rs_accept_mcmc_array(l, 1)
+        ELSE
+            WRITE (99, "(1X, F15.6)", advance='no') Rorb_Rs_accept_mcmc_array(l, i)
+        END IF        
+    END DO
+    WRITE (99, "(A1)", advance='yes') blank
+END DO 
+CLOSE(99) 
+
+!Write output file of the Rorb_Rs array from accepted proposals.
+OPEN(unit=99, FILE=output_Rorb_Rs_all_array_filename, status='replace', action='write')
+!Now write the Rorb_Rs array line by line into a file.
+DO l = 1, NINT(mcmc_accepted_iteration_size/0.05)
+    DO i = 1, number_mcmc_walkers
+        IF (i == 1) THEN
+            WRITE (99, "(F15.6)", advance='no') Rorb_Rs_all_mcmc_array(l, 1)
+        ELSE
+            WRITE (99, "(1X, F15.6)", advance='no') Rorb_Rs_all_mcmc_array(l, i)
+        END IF        
+    END DO
+    WRITE (99, "(A1)", advance='yes') blank
+END DO 
+CLOSE(99)
+
 
 
 
@@ -4440,9 +5680,65 @@ DO i = 1, number_mcmc_walkers
         WRITE (99, "(1X, F16.8)", advance='no') walker_parameter_array_chi2(14, i)
     END IF        
 END DO
+WRITE (99, "(A1)", advance='yes') blank
+
+DO i = 1, number_mcmc_walkers
+    IF (i == 1) THEN
+        WRITE (99, "(F16.8)", advance='no') walker_parameter_array_chi2(15, 1)
+    ELSE
+        WRITE (99, "(1X, F16.8)", advance='no') walker_parameter_array_chi2(15, i)
+    END IF        
+END DO
+WRITE (99, "(A1)", advance='yes') blank
+
+DO i = 1, number_mcmc_walkers
+    IF (i == 1) THEN
+        WRITE (99, "(F16.8)", advance='no') walker_parameter_array_chi2(16, 1)
+    ELSE
+        WRITE (99, "(1X, F16.8)", advance='no') walker_parameter_array_chi2(16, i)
+    END IF        
+END DO
+WRITE (99, "(A1)", advance='yes') blank
+
+DO i = 1, number_mcmc_walkers
+    IF (i == 1) THEN
+        WRITE (99, "(F16.8)", advance='no') walker_parameter_array_chi2(17, 1)
+    ELSE
+        WRITE (99, "(1X, F16.8)", advance='no') walker_parameter_array_chi2(17, i)
+    END IF        
+END DO
+WRITE (99, "(A1)", advance='yes') blank
+
+DO i = 1, number_mcmc_walkers
+    IF (i == 1) THEN
+        WRITE (99, "(F16.8)", advance='no') walker_parameter_array_chi2(18, 1)
+    ELSE
+        WRITE (99, "(1X, F16.8)", advance='no') walker_parameter_array_chi2(18, i)
+    END IF        
+END DO
 CLOSE(99)
+WRITE (99, "(A1)", advance='yes') blank
 
+DO i = 1, number_mcmc_walkers
+    IF (i == 1) THEN
+        WRITE (99, "(F16.8)", advance='no') walker_parameter_array_chi2(19, 1)
+    ELSE
+        WRITE (99, "(1X, F16.8)", advance='no') walker_parameter_array_chi2(19, i)
+    END IF        
+END DO
+CLOSE(99)
+WRITE (99, "(A1)", advance='yes') blank
 
+DO i = 1, number_mcmc_walkers
+    IF (i == 1) THEN
+        WRITE (99, "(F16.8)", advance='no') walker_parameter_array_chi2(20, 1)
+    ELSE
+        WRITE (99, "(1X, F16.8)", advance='no') walker_parameter_array_chi2(20, i)
+    END IF        
+END DO
+CLOSE(99)
+ 
+ 
  
 
 !Output the best fit parameters for each walker based on the mean of all MCMC iterations.
@@ -4571,11 +5867,69 @@ DO i = 1, number_mcmc_walkers
         WRITE (99, "(1X, F16.8)", advance='no') walker_parameter_array_mean(14, i)
     END IF        
 END DO
+WRITE (99, "(A1)", advance='yes') blank
+
+DO i = 1, number_mcmc_walkers
+    IF (i == 1) THEN
+        WRITE (99, "(F16.8)", advance='no') walker_parameter_array_mean(15, 1)
+    ELSE
+        WRITE (99, "(1X, F16.8)", advance='no') walker_parameter_array_mean(15, i)
+    END IF        
+END DO
+WRITE (99, "(A1)", advance='yes') blank
+
+DO i = 1, number_mcmc_walkers
+    IF (i == 1) THEN
+        WRITE (99, "(F16.8)", advance='no') walker_parameter_array_mean(16, 1)
+    ELSE
+        WRITE (99, "(1X, F16.8)", advance='no') walker_parameter_array_mean(16, i)
+    END IF        
+END DO
+WRITE (99, "(A1)", advance='yes') blank
+
+DO i = 1, number_mcmc_walkers
+    IF (i == 1) THEN
+        WRITE (99, "(F16.8)", advance='no') walker_parameter_array_mean(17, 1)
+    ELSE
+        WRITE (99, "(1X, F16.8)", advance='no') walker_parameter_array_mean(17, i)
+    END IF        
+END DO
+WRITE (99, "(A1)", advance='yes') blank
+
+DO i = 1, number_mcmc_walkers
+    IF (i == 1) THEN
+        WRITE (99, "(F16.8)", advance='no') walker_parameter_array_mean(18, 1)
+    ELSE
+        WRITE (99, "(1X, F16.8)", advance='no') walker_parameter_array_mean(18, i)
+    END IF        
+END DO
+CLOSE(99)
+WRITE (99, "(A1)", advance='yes') blank
+
+DO i = 1, number_mcmc_walkers
+    IF (i == 1) THEN
+        WRITE (99, "(F16.8)", advance='no') walker_parameter_array_mean(19, 1)
+    ELSE
+        WRITE (99, "(1X, F16.8)", advance='no') walker_parameter_array_mean(19, i)
+    END IF        
+END DO
+CLOSE(99)
+WRITE (99, "(A1)", advance='yes') blank
+
+DO i = 1, number_mcmc_walkers
+    IF (i == 1) THEN
+        WRITE (99, "(F16.8)", advance='no') walker_parameter_array_mean(20, 1)
+    ELSE
+        WRITE (99, "(1X, F16.8)", advance='no') walker_parameter_array_mean(20, i)
+    END IF        
+END DO
 CLOSE(99)
 
 
 
 
+
+!**********************Having issues with some of the output here****************************************************
 !Output the standard deviation of each parameters for each walker based on all of MCMC iterations.
 OPEN(unit=99, FILE=output_stand_dev_filename, status='replace', action='write')
 DO i = 1, number_mcmc_walkers
@@ -4702,6 +6056,62 @@ DO i = 1, number_mcmc_walkers
         WRITE (99, "(1X, F16.8)", advance='no') walker_parameter_array_stand_dev(14, i)
     END IF        
 END DO
+WRITE (99, "(A1)", advance='yes') blank
+
+DO i = 1, number_mcmc_walkers
+    IF (i == 1) THEN
+        WRITE (99, "(F16.8)", advance='no') walker_parameter_array_stand_dev(15, 1)
+    ELSE
+        WRITE (99, "(1X, F16.8)", advance='no') walker_parameter_array_stand_dev(15, i)
+    END IF        
+END DO
+WRITE (99, "(A1)", advance='yes') blank
+
+DO i = 1, number_mcmc_walkers
+    IF (i == 1) THEN
+        WRITE (99, "(F16.8)", advance='no') walker_parameter_array_stand_dev(16, 1)
+    ELSE
+        WRITE (99, "(1X, F16.8)", advance='no') walker_parameter_array_stand_dev(16, i)
+    END IF        
+END DO
+WRITE (99, "(A1)", advance='yes') blank
+
+DO i = 1, number_mcmc_walkers
+    IF (i == 1) THEN
+        WRITE (99, "(F16.8)", advance='no') walker_parameter_array_stand_dev(17, 1)
+    ELSE
+        WRITE (99, "(1X, F16.8)", advance='no') walker_parameter_array_stand_dev(17, i)
+    END IF        
+END DO
+WRITE (99, "(A1)", advance='yes') blank
+
+DO i = 1, number_mcmc_walkers
+    IF (i == 1) THEN
+        WRITE (99, "(F16.8)", advance='no') walker_parameter_array_stand_dev(18, 1)
+    ELSE
+        WRITE (99, "(1X, F16.8)", advance='no') walker_parameter_array_stand_dev(18, i)
+    END IF        
+END DO
+CLOSE(99)
+WRITE (99, "(A1)", advance='yes') blank
+
+DO i = 1, number_mcmc_walkers
+    IF (i == 1) THEN
+        WRITE (99, "(F16.8)", advance='no') walker_parameter_array_stand_dev(19, 1)
+    ELSE
+        WRITE (99, "(1X, F16.8)", advance='no') walker_parameter_array_stand_dev(19, i)
+    END IF        
+END DO
+CLOSE(99)
+WRITE (99, "(A1)", advance='yes') blank
+
+DO i = 1, number_mcmc_walkers
+    IF (i == 1) THEN
+        WRITE (99, "(F16.8)", advance='no') walker_parameter_array_stand_dev(20, 1)
+    ELSE
+        WRITE (99, "(1X, F16.8)", advance='no') walker_parameter_array_stand_dev(20, i)
+    END IF        
+END DO
 CLOSE(99)
 
 
@@ -4762,6 +6172,32 @@ WRITE(99,168) 'Variance of Inc:', Inc_stand_dev, 'deg'
 WRITE(99,169) 'Best omega arg periastron:', omega_arg_periastron_mean2, 'deg'
 WRITE(99,170) 'Variance of omega arg periastron:', omega_arg_periastron_stand_dev, 'deg'
 
+WRITE(99,171) 'Best vmacro:', vmacro_mean2, 'km/s'
+WRITE(99,172) 'Variance of vmacro:', vmacro_stand_dev, 'km/s'
+
+WRITE(99,173) 'Best q_1:', q_1_mean2
+WRITE(99,174) 'Variance of q_1:', q_1_stand_dev
+
+WRITE(99,175) 'Best q_2:', q_2_mean2
+WRITE(99,176) 'Variance of q_2:', q_2_stand_dev
+
+WRITE(99,177) 'Best K_amp:', K_amp_mean2, 'm/s'
+WRITE(99,178) 'Variance of K_amp:', K_amp_stand_dev, 'm/s'
+
+WRITE(99,179) 'Best Impact:', Impact_mean2
+WRITE(99,180) 'Variance of Impact:', Impact_stand_dev
+
+WRITE(99,181) 'Best Rorb_Rs:', Rorb_Rs_mean2
+WRITE(99,182) 'Variance of Rorb_Rs:', Rorb_Rs_stand_dev
+
+WRITE(99,183) 'Number of fitted parameters:', Number_fit
+WRITE(99,184) 'Number of RV data used in fit:', Number_points1
+
+
+
+
+
+
 133  FORMAT(A90, 2X, F15.6)
 134  FORMAT(A90, 2X, I10, A1, I10)
 135  FORMAT(A90, 2X, F15.6)
@@ -4812,11 +6248,32 @@ WRITE(99,170) 'Variance of omega arg periastron:', omega_arg_periastron_stand_de
 
 169  FORMAT(A90, 2X, F15.6, 5X, A3)
 170  FORMAT(A90, 2X, F15.6, 5X, A3)
+
+171  FORMAT(A90, 2X, F15.6, 5X, A4)
+172  FORMAT(A90, 2X, F15.6, 5X, A4)
+
+173  FORMAT(A90, 2X, F15.6)
+174  FORMAT(A90, 2X, F15.6)
+
+175  FORMAT(A90, 2X, F15.6)
+176  FORMAT(A90, 2X, F15.6)
+
+177  FORMAT(A90, 2X, F15.6, 5X, A3)
+178  FORMAT(A90, 2X, F15.6, 5X, A3)
+
+179  FORMAT(A90, 2X, F15.6)
+180  FORMAT(A90, 2X, F15.6)
+
+181  FORMAT(A90, 2X, F15.6)
+182  FORMAT(A90, 2X, F15.6)
+
+183  FORMAT(A90, 2X, I10)
+184  FORMAT(A90, 2X, I10)
 CLOSE(99)
 
 
    
-
+   
 call system_clock(system_time_4)
 PRINT *, 'The time taken to run is: ', (system_time_4 - system_time_1)/clock_rate, ' seconds'
 
@@ -4849,6 +6306,24 @@ DEALLOCATE(Inc_sum2)
 DEALLOCATE(omega_arg_periastron_accept_mcmc_array)
 DEALLOCATE(omega_arg_periastron_all_mcmc_array)
 DEALLOCATE(omega_arg_periastron_sum2)
+DEALLOCATE(vmacro_accept_mcmc_array)
+DEALLOCATE(vmacro_all_mcmc_array)
+DEALLOCATE(vmacro_sum2)
+DEALLOCATE(q_1_accept_mcmc_array)
+DEALLOCATE(q_1_all_mcmc_array)
+DEALLOCATE(q_1_sum2)
+DEALLOCATE(q_2_accept_mcmc_array)
+DEALLOCATE(q_2_all_mcmc_array)
+DEALLOCATE(q_2_sum2)
+DEALLOCATE(K_amp_accept_mcmc_array)
+DEALLOCATE(K_amp_all_mcmc_array)
+DEALLOCATE(K_amp_sum2)
+DEALLOCATE(Impact_accept_mcmc_array)
+DEALLOCATE(Impact_all_mcmc_array)
+DEALLOCATE(Impact_sum2)
+DEALLOCATE(Rorb_Rs_accept_mcmc_array)
+DEALLOCATE(Rorb_Rs_all_mcmc_array)
+DEALLOCATE(Rorb_Rs_sum2)
 DEALLOCATE(RV_zero_offset_accept_mcmc_array)
 DEALLOCATE(RV_zero_offset_all_mcmc_array)
 DEALLOCATE(RV_zero_offset_sum2)
@@ -4903,6 +6378,12 @@ DEALLOCATE(normal11)
 DEALLOCATE(normal12)
 DEALLOCATE(normal13)
 DEALLOCATE(normal14)
+DEALLOCATE(normal15)
+DEALLOCATE(normal16)
+DEALLOCATE(normal17)
+DEALLOCATE(normal18)
+DEALLOCATE(normal19)
+DEALLOCATE(normal20)
 DEALLOCATE(random_draw_array)
 DEALLOCATE(spread_rand_RV_offset)
 DEALLOCATE(spread_rand_Orbital_period)
@@ -4915,10 +6396,17 @@ DEALLOCATE(spread_rand_Ms)
 DEALLOCATE(spread_rand_Ecc)
 DEALLOCATE(spread_rand_Inc)
 DEALLOCATE(spread_rand_omega)
+DEALLOCATE(spread_rand_vmacro)
+DEALLOCATE(spread_rand_q_1)
+DEALLOCATE(spread_rand_q_2)
+DEALLOCATE(spread_rand_K_amp)
+DEALLOCATE(spread_rand_Impact)
+DEALLOCATE(spread_rand_Rorb_Rs)
 DEALLOCATE(spread_rand_RV_zero)
 DEALLOCATE(spread_rand_vsini)
 DEALLOCATE(spread_rand_spin_orbit)
 DEALLOCATE(scale_factor_array)
+IF (ALLOCATED(omega_arg_periastron_sorted_array)) DEALLOCATE(omega_arg_periastron_sorted_array)
 
 
 
@@ -4957,5 +6445,22 @@ CONTAINS
         END DO
 
     END SUBROUTINE Selection_sort
+    
+    PURE SUBROUTINE Insertion_Sort(a)
+      DOUBLE PRECISION, INTENT(in out), DIMENSION(:) :: a
+      !DOUBLE PRECISION, INTENT(in out) :: a(:)
+      DOUBLE PRECISION :: temp
+      INTEGER(8) :: i, j
+ 
+      DO i = 2, SIZE(a)
+         j = i - 1
+         temp = a(i)
+         DO WHILE (j>=1 .AND. a(j)>temp)
+            a(j+1) = a(j)
+            j = j - 1
+         END DO
+         a(j+1) = temp
+      END DO
+    END SUBROUTINE Insertion_Sort
 
-END PROGRAM ExOSAM_RM_effect_V02
+END PROGRAM ExOSAM_RM_effect_V03

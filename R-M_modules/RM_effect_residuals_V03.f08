@@ -1,4 +1,4 @@
-PROGRAM RM_effect_residuals
+PROGRAM RM_effect_residuals_V03
     
 !This program determines the residuals between the model from the best fit spin-orbit angle and vsini (as determined
 !from the MCMC routine) and the observed RVs. The priors on the other parameters are used to fit the model and 
@@ -35,6 +35,7 @@ double precision :: Center_of_planet_x
 double precision :: Center_of_planet_y
 double precision :: chi_squared_change          !Check whether this variable will remain. May change file read in.
 double precision :: chi_squared_change_fit
+double precision :: chi_2
 double precision :: data_plot_model_interval
 double precision :: Dist2
 double precision :: Distance_center
@@ -51,7 +52,6 @@ double precision :: Ecc_begin
 double precision :: Ecc_end
 double precision :: Ecc_prior
 double precision :: Ecc_1sigerr
-double precision :: impact_prior
 double precision :: Inc
 double precision :: Inc_begin
 double precision :: Inc_end
@@ -70,6 +70,7 @@ double precision :: Lblocked
 double precision :: Lblocked2
 double precision :: Length
 double precision :: length_time_compare
+double precision :: likelihood                                    !MCMC variables.
 double precision :: Mean_anomaly_transit
 double precision :: model_data_difference
 double precision :: Mp
@@ -102,6 +103,7 @@ double precision :: Pixel
 double precision :: Planet_star_distance
 double precision :: q_1
 double precision :: q_2
+double precision :: r_Chi_2
 double precision :: Radius_planet_array
 double precision :: radius_ratio_prior
 double precision :: Rorb
@@ -191,6 +193,33 @@ double precision :: Ypos
 double precision :: Ypos2
 double precision :: Ypos_inside
 double precision :: Zpos
+double precision :: vmacro_prior
+double precision :: vmacro_end
+double precision :: vmacro_begin
+double precision :: vmacro_1sigerr
+double precision :: q_1_prior
+double precision :: q_1_end
+double precision :: q_1_begin
+double precision :: q_1_1sigerr
+double precision :: q_2_prior
+double precision :: q_2_end
+double precision :: q_2_begin
+double precision :: q_2_1sigerr
+double precision :: K_amp
+double precision :: K_amp_prior
+double precision :: K_amp_end
+double precision :: K_amp_begin
+double precision :: K_amp_1sigerr
+double precision :: Impact
+double precision :: Impact_prior
+double precision :: Impact_end
+double precision :: Impact_begin
+double precision :: Impact_1sigerr
+double precision :: Rorb_Rs
+double precision :: Rorb_Rs_prior
+double precision :: Rorb_Rs_end
+double precision :: Rorb_Rs_begin
+double precision :: Rorb_Rs_1sigerr
 
 
 
@@ -264,13 +293,29 @@ character(LEN=150) :: output_RV_theory_fit_array_filename
 character(LEN=150) :: output_RV_theory_all_array_filename
 character(LEN=150) :: output_residual_all_array_filename
 character(LEN=150) :: output_residual_array_filename
+character(LEN=150) :: output_chi_squared_filename
 character(LEN=150) :: input_best_parameters_mcmc_filename
+character(LEN=150) :: input_null_hypothesis_filename
 character(LEN=60) :: input_data_filename
 character(LEN=150) :: my_data_plotting_symbols
 character(LEN=150) :: other_data_plotting_symbols
 character(LEN=1) :: linear_quadratic
 character(LEN=1) :: impose_prior_vsini
 character(LEN=1) :: use_out_transit_rv_for_fit
+character(LEN=1) :: vmacro_norm_prior
+character(LEN=1) :: vmacro_fixed
+character(LEN=1) :: q_norm_prior
+character(LEN=1) :: q_fixed
+character(LEN=1) :: K_amp_norm_prior
+character(LEN=1) :: K_amp_fixed
+character(LEN=1) :: use_K_amp
+character(LEN=1) :: Impact_norm_prior
+character(LEN=1) :: Impact_fixed
+character(LEN=1) :: use_Impact
+character(LEN=1) :: Rorb_Rs_norm_prior
+character(LEN=1) :: Rorb_Rs_fixed
+character(LEN=1) :: use_Rorb_Rs_ratio
+character(LEN=1) :: test_null
 
 
 
@@ -312,19 +357,28 @@ my_data_plotting_symbols, other_data_plotting_symbols, Ms_solar_prior, Ms_solar_
 Ms_solar_1sigerr, Ms_solar_norm_prior, Ms_solar_fixed, Rs_solar_prior, Rs_solar_end, &
 Rs_solar_begin, Rs_solar_1sigerr, Rs_solar_norm_prior, Rs_solar_fixed, Rp_Rs_ratio_prior, &
 Rp_Rs_ratio_end, Rp_Rs_ratio_begin, Rp_Rs_ratio_1sigerr, Rp_Rs_ratio_norm_prior, Rp_Rs_ratio_fixed, &
-use_Rp_Rs_ratio, vmacro, beta_rot, M_pixels, linear_quadratic, &
-u, q_1, q_2, Inc_prior, Inc_end, &
-Inc_begin, Inc_1sigerr, Inc_norm_prior, Inc_fixed, omega_arg_periastron_prior, &
-omega_arg_periastron_end, omega_arg_periastron_begin, omega_arg_periastron_1sigerr, omega_arg_periastron_norm_prior, omega_arg_periastron_fixed, &
-Ecc_prior, Ecc_end, Ecc_begin, Ecc_1sigerr, Ecc_norm_prior, &
-Ecc_fixed, Mp_prior, Mp_end, Mp_begin, Mp_1sigerr, &
-Mp_norm_prior, Mp_fixed, Rp_prior, Rp_end, Rp_begin, &
-Rp_1sigerr, Rp_norm_prior, Rp_fixed, Orbital_period_prior, Orbital_period_end, &
-Orbital_period_begin, Orbital_period_1sigerr, Orbital_period_norm_prior, Orbital_period_fixed, JD_time_mid_transit_prior, &
-JD_time_mid_transit_end, JD_time_mid_transit_begin, JD_time_mid_transit_1sigerr, JD_time_mid_transit_norm_prior, JD_time_mid_transit_fixed, &
-Albedo, RV_zero_offset_prior, RV_zero_offset_end, RV_zero_offset_begin, RV_zero_offset_interval, &
-RV_zero_offset_1sigerr, RV_zero_offset_norm_prior, RV_zero_offset_fixed, RV_offset_datasets_prior, RV_offset_datasets_end, &
-RV_offset_datasets_begin, RV_offset_datasets_interval, RV_offset_datasets_1sigerr, RV_offset_datasets_norm_prior, RV_offset_datasets_fixed, &
+use_Rp_Rs_ratio, vmacro_prior, vmacro_end, vmacro_begin, vmacro_1sigerr, &
+vmacro_norm_prior, vmacro_fixed, beta_rot, M_pixels, linear_quadratic, &
+u, q_1_prior, q_1_end, q_1_begin, q_1_1sigerr, & 
+q_2_prior, q_2_end, q_2_begin, q_2_1sigerr, q_norm_prior, &
+q_fixed, Inc_prior, Inc_end, Inc_begin, Inc_1sigerr, &
+Inc_norm_prior, Inc_fixed, omega_arg_periastron_prior, omega_arg_periastron_end, omega_arg_periastron_begin, &
+omega_arg_periastron_1sigerr, omega_arg_periastron_norm_prior, omega_arg_periastron_fixed, Ecc_prior, Ecc_end, &
+Ecc_begin, Ecc_1sigerr, Ecc_norm_prior, Ecc_fixed, Mp_prior, &
+Mp_end, Mp_begin, Mp_1sigerr, Mp_norm_prior, Mp_fixed, &
+Rp_prior, Rp_end, Rp_begin, Rp_1sigerr, Rp_norm_prior, &
+Rp_fixed, Orbital_period_prior, Orbital_period_end, Orbital_period_begin, Orbital_period_1sigerr, &
+Orbital_period_norm_prior, Orbital_period_fixed, JD_time_mid_transit_prior, JD_time_mid_transit_end, JD_time_mid_transit_begin, &
+JD_time_mid_transit_1sigerr, JD_time_mid_transit_norm_prior, JD_time_mid_transit_fixed, Albedo, RV_zero_offset_prior, &
+RV_zero_offset_end, RV_zero_offset_begin, RV_zero_offset_interval, RV_zero_offset_1sigerr, RV_zero_offset_norm_prior, &
+RV_zero_offset_fixed, RV_offset_datasets_prior, RV_offset_datasets_end, RV_offset_datasets_begin, RV_offset_datasets_interval, &
+RV_offset_datasets_1sigerr, RV_offset_datasets_norm_prior, RV_offset_datasets_fixed, K_amp_prior, K_amp_end, &
+K_amp_begin, K_amp_1sigerr, K_amp_norm_prior, K_amp_fixed, use_K_amp, &
+
+Impact_prior, Impact_end, Impact_begin, Impact_1sigerr, Impact_norm_prior, &
+Impact_fixed, use_Impact, Rorb_Rs_prior, Rorb_Rs_end, Rorb_Rs_begin, &
+Rorb_Rs_1sigerr, Rorb_Rs_norm_prior, Rorb_Rs_fixed, use_Rorb_Rs_ratio, &
+
 vsini_prior, vsini_end, vsini_begin, vsini_1sigerr, vsini_norm_prior, &
 impose_prior_vsini, vsini_fixed, stellar_rotation_angle_prior, stellar_rotation_angle_end, stellar_rotation_angle_begin, &
 stellar_rotation_angle_1sigerr, stellar_rotation_angle_norm_prior, impose_prior_stellar_rotation_angle, stellar_rotation_angle_fixed, mcmc_accepted_iteration_size, &
@@ -337,19 +391,28 @@ number_mcmc_walkers, scale_factor_in, chi_squared_change, chi_squared_change_fit
           F50.5, /, A1, /, A1, /, F50.5, /, F50.5, /, &
           F50.5, /, F50.5, /, A1, /, A1, /, F50.5, /, &
           F50.5, /, F50.5, /, F50.5, /, A1, /, A1, /, &
-          A1, /, F50.5, /, F50.5, /, I20, /, A1, /, &
+          A1, /, F50.5, /, F50.5, /, F50.5, /, F50.5, /, &
+          A1, /, A1, /, F50.5, /, I20, /, A1, /, &
           F50.5, /, F50.5, /, F50.5, /, F50.5, /, F50.5, /, &
-          F50.5, /, F50.5, /, A1, /, A1, /, F50.5, /, &
-          F50.5, /, F50.5, /, F50.5, /, A1, /, A1, /, &
           F50.5, /, F50.5, /, F50.5, /, F50.5, /, A1, /, &
           A1, /, F50.5, /, F50.5, /, F50.5, /, F50.5, /, &
           A1, /, A1, /, F50.5, /, F50.5, /, F50.5, /, &
-          F50.5, /, A1, /, A1, /, F50.10, /, F50.10, /, &
-          F50.10, /, F50.10, /, A1, /, A1, /, F50.10, /, &
-          F50.10, /, F50.10, /, F50.10, /, A1, /, A1, /, &
-          F50.5, /, F50.5, /, F50.5, /, F50.5, /, F50.5, /, &
           F50.5, /, A1, /, A1, /, F50.5, /, F50.5, /, &
+          F50.5, /, F50.5, /, A1, /, A1, /, F50.5, /, &
           F50.5, /, F50.5, /, F50.5, /, A1, /, A1, /, &
+          F50.5, /, F50.5, /, F50.5, /, F50.5, /, A1, /, &
+          A1, /, F50.10, /, F50.10, /, F50.10, /, F50.10, /, &
+          A1, /, A1, /, F50.10, /, F50.10, /, F50.10, /, &
+          F50.10, /, A1, /, A1, /, F50.5, /, F50.5, /, &
+          F50.5, /, F50.5, /, F50.5, /, F50.5, /, A1, /, &
+          A1, /, F50.5, /, F50.5, /, F50.5, /, F50.5, /, &
+          F50.5, /, A1, /, A1, /, F50.5, /, F50.5, /, &
+          F50.5, /, F50.5, /, A1, /, A1, /, A1, /, &
+          
+          F50.5, /, F50.5, /, F50.5, /, F50.5, /, A1, /, &
+          A1, /, A1, /, F50.5, /, F50.5, /, F50.5, /, &
+          F50.5, /, A1, /, A1, /, A1, /, &
+          
           F50.5, /, F50.5, /, F50.5, /, F50.5, /, A1, /, &
           A1, /, A1, /, F50.5, /, F50.5, /, F50.5, /, &
           F50.5, /, A1, /, A1, /, A1, /, I20, /, &
@@ -387,7 +450,9 @@ output_data_fit_array_filename = TRIM(TRIM(output_temp_data) // 'data_fit_array.
 output_RV_theory_fit_array_filename = TRIM(TRIM(output_temp_data) // 'RV_Theory_fit_array.txt')
 output_residual_all_array_filename = TRIM(TRIM(output_temp_data) // 'residual_all_array.txt')
 output_RV_theory_all_array_filename = TRIM(TRIM(output_temp_data) // 'RV_Theory_all_array.txt')
+output_chi_squared_filename = TRIM(TRIM(output_temp_data) // 'chi_squared_value.txt')
 input_best_parameters_mcmc_filename = TRIM(TRIM(output_temp_data) // 'best_parameters_mcmc.txt')
+input_null_hypothesis_filename = TRIM(TRIM(output_temp_data) // 'test_null.txt')
 
 
 
@@ -411,6 +476,14 @@ CLOSE(99)
 
 PRINT *,  'vsini_mean_mcmc: ', vsini_mean_mcmc
 PRINT *,  'stellar_rotation_angle_mean_mcmc: ', stellar_rotation_angle_mean_mcmc
+
+
+
+
+OPEN(unit=99, FILE=input_null_hypothesis_filename, status='old', action='read')
+READ(99,248) test_null
+248 FORMAT(A1)
+CLOSE(99)
 
 
 
@@ -485,10 +558,45 @@ END IF
 !**********************************************************************************************************************************************
 !Based on given priors, determine the approximate time in the simulation to start and finish comparing RV's with model.
 Ms = Ms_solar_prior * Mss
-Rs = Rss * Rs_solar_prior
 
+IF ((use_Impact == 'Y') .AND. (use_Rorb_Rs_ratio == 'Y')) THEN
+    Inc_prior = acos((impact_prior/(Rorb_Rs_prior))*((1.0D0 + (Ecc_prior*sin(omega_arg_periastron_prior*(pi/180.0D0))))/(1.0D0 - Ecc_prior**2.0D0)))*(180.0D0/pi)
+    Transit_length_prior = ((Orbital_period_prior*day_sec)/pi) * asin((1.0D0/Rorb_Rs_prior)*(sqrt((1.0D0 + Rp_Rs_ratio_prior)**2.0D0 - impact_prior**2.0D0)/sin(Inc_prior*(pi/180.0D0)))) * &
+                           (sqrt(1.0D0 - Ecc_prior**2.0D0)/(1.0D0 + (Ecc_prior*sin(omega_arg_periastron_prior*(pi/180.0D0)))))
+    PRINT *, "Transit_length_prior: ", Transit_length_prior
+    PRINT *, "Inc_prior: ", Inc_prior
+    
+    PRINT *, "Orbital_period_prior: ", Orbital_period_prior
+    PRINT *, "Rorb_Rs_prior: ", Rorb_Rs_prior
+    PRINT *, "radius_ratio_prior: ", radius_ratio_prior
+    PRINT *, "impact_prior: ", impact_prior
+    PRINT *, "Ecc_prior: ", Ecc_prior
+END IF
+
+IF ((use_K_amp == 'Y') .AND. (Mp_fixed == 'Y') .AND. (Ecc == 0)) THEN
+    Mp = ((Orbital_period_prior*day_sec)/(2.0D0*pi*G))**(1.0D0/3.0D0)*((Ms**(2.0D0/3.0D0)*K_amp_prior)/sin(Inc_prior*(pi/180.0D0)))
+ELSE
+    IF (Jupiter_Earth_units == 'Y') THEN
+        Mp = Mp_prior*Mj
+    END IF
+
+    IF (Jupiter_Earth_units == 'N') THEN
+        Mp = Mp_prior*Me
+    END IF
+END IF
+
+Rorb_prior = (((Orbital_period_prior*day_sec)**2.0d0*G*(Ms + Mp))/(4.0d0*pi**2.0d0))**(1.0d0/3.0d0)     !Semi-major axis.
+Rorb_star_prior = (((Orbital_period_prior*day_sec)**2.0D0*G*((Mp**(3.0D0))/(Ms + Mp)**(2.0D0)))/(4.0d0*pi**2.0D0))**(1.0d0/3.0d0)     !Semi-major of stellar axis.
+
+IF (use_Rorb_Rs_ratio == 'Y') THEN
+    Rs = Rorb_prior/(Rorb_Rs_prior)
+ELSE
+    Rs = Rss * Rs_solar_prior
+END IF
+
+!Based on given priors, determine the approximate time in the simulation to start and finish comparing RV's with model.
 IF (use_Rp_Rs_ratio == 'Y') THEN
-    Rp = Rp_Rs_ratio_prior * (Rs_solar_prior * Rss)
+    Rp = Rp_Rs_ratio_prior * (Rs)
 ELSE
     IF (Jupiter_Earth_units == 'Y') THEN
         Rp = Rp_prior*Rj
@@ -499,20 +607,23 @@ ELSE
     END IF
 END IF
 
-IF (Jupiter_Earth_units == 'Y') THEN
-    Mp = Mp_prior*Mj
+Rs2 = Rs**2.0D0                              !Square the radius of star to speed up calculations.
+
+IF (linear_quadratic == 'q') THEN
+   Io = 6.0D0 / (pi*Rs2*(6.0D0 - (2.0D0*q_1_prior) - q_2_prior))     !The initial light intensity equation with limb darkening (quadratic)
+ELSE
+   Io = 1.0D0 / (pi*Rs2*(1.0D0-(u/3.0D0)))      !The initial light intensity equation with limb darkening (linear)
+                                                !(normalize Io such that total star luminosity is 1). 
 END IF
 
-IF (Jupiter_Earth_units == 'N') THEN
-    Mp = Mp_prior*Me
+IF ((use_impact == 'N') .OR. (use_Rorb_Rs_ratio == 'N')) THEN
+    impact_prior = ((Rorb_prior*cos(Inc_prior*(pi/180.0D0)))/Rs)*((1.0D0 - Ecc_prior**2.0D0)/(1.0D0 + (Ecc_prior*sin(omega_arg_periastron_prior*(pi/180.0D0)))))
+    Transit_length_prior = ((Orbital_period_prior*day_sec)/pi) * asin((Rs/Rorb_prior)*(sqrt((1.0D0 + Rp_Rs_ratio_prior)**2.0D0 - impact_prior**2.0D0)/sin(Inc_prior*(pi/180.0D0)))) * &
+                           (sqrt(1.0D0 - Ecc_prior**2.0D0)/(1.0D0 + (Ecc_prior*sin(omega_arg_periastron_prior*(pi/180.0D0)))))
 END IF
 
-Rorb_prior = (((Orbital_period_prior*day_sec)**2.0d0*G*(Ms + Mp))/(4.0d0*pi**2.0d0))**(1.0d0/3.0d0)     !Semi-major axis.
-Rorb_star_prior = (((Orbital_period_prior*day_sec)**2.0D0*G*((Mp**(3.0D0))/(Ms + Mp)**(2.0D0)))/(4.0d0*pi**2.0D0))**(1.0d0/3.0d0)     !Semi-major of stellar axis.
 radius_ratio_prior = Rp_Rs_ratio_prior
-impact_prior = ((Rorb_prior*cos(Inc_prior*(pi/180.0D0)))/Rs)*((1.0D0 - Ecc_prior**2.0D0)/(1.0D0 + (Ecc_prior*sin(omega_arg_periastron_prior*(pi/180.0D0)))))
-Transit_length_prior = ((Orbital_period_prior*day_sec)/pi) * asin((Rs/Rorb_prior)*(sqrt(abs((1.0D0 + radius_ratio_prior)**2.0D0 - impact_prior**2.0D0))/sin(Inc_prior*(pi/180.0D0)))) * &
-                       (sqrt(1.0D0 - Ecc_prior**2.0D0)/(1.0D0 + (Ecc_prior*sin(omega_arg_periastron_prior*(pi/180.0D0)))))
+
                        
 PRINT *, "Length of transit with given priors: ", Transit_length_prior
 length_time_compare = (Transit_length_prior/2.0D0) + Time_compare_vel
@@ -539,16 +650,7 @@ PRINT *, "Stellar Semi-major axis: ", Rorb_star/AU
 !Run model again but with the best parameters.
 num_compare = 0
 Aplan = pi*Rp**2.0D0                         !Surface area of the planet.
-
-Rs2 = Rs**2.0D0                              !Square the radius of star to speed up calculations.
 Rp2 = Rp**2.0D0                              !Square the radius of planet to speed up calculations.
-
-IF (linear_quadratic == 'q') THEN
-    Io = 6.0D0 / (pi*Rs2*(6.0D0 - (2.0D0*q_1) - q_2))     !The initial light intensity equation with limb darkening (quadratic)
-ELSE
-    Io = 1.0D0 / (pi*Rs2*(1.0D0-(u/3.0D0)))      !The initial light intensity equation with limb darkening (linear)
-                                                !(normalize Io such that total star luminosity is 1). 
-END IF
 
 Ecc = Ecc_prior
 
@@ -558,17 +660,21 @@ Inc = Inc_prior
 
 PRINT *, "Inc: ", Inc
 
-IF (Ecc == 0) THEN 
-    !Maximum amplitude caused by the exoplanet in a circular orbit.
-    RVamplitude = SQRT((G*(Mp**(3.0D0))*(sin(Inc*(pi/180.0D0)))**(3.0D0))/(Rorb_star*sin(Inc*(pi/180.0D0))*(Ms + Mp)**(2.0D0)))
+IF (use_K_amp == 'Y') THEN
+    RVamplitude = K_amp_prior
 ELSE
-    !Maximum amplitude caused by the exoplanet in an eccentric orbit.
-    RVamplitude = SQRT((G*(Mp**(3.0D0))*(sin(Inc*(pi/180.0D0)))**(3.0D0))/((1.0D0 - Ecc**2.0D0)*Rorb_star*sin(Inc*(pi/180.0D0))*(Ms + Mp)**(2.0D0)))
+    IF (Ecc == 0) THEN 
+        !Maximum amplitude caused by the exoplanet in a circular orbit.
+        RVamplitude = SQRT((G*(Mp**(3.0D0))*(sin(Inc*(pi/180.0D0)))**(3.0D0))/(Rorb_star*sin(Inc*(pi/180.0D0))*(Ms + Mp)**(2.0D0)))
+    ELSE
+        !Maximum amplitude caused by the exoplanet in an eccentric orbit.
+        RVamplitude = SQRT((G*(Mp**(3.0D0))*(sin(Inc*(pi/180.0D0)))**(3.0D0))/((1.0D0 - Ecc**2.0D0)*Rorb_star*sin(Inc*(pi/180.0D0))*(Ms + Mp)**(2.0D0)))
+    END IF
 END IF
 
 PRINT *, "RVamplitude: ", RVamplitude
 
-vturb = SQRT(beta_rot**2.0D0 + vmacro**2.0D0)
+vturb = SQRT(beta_rot**2.0D0 + vmacro_prior**2.0D0)
 
 omega_arg_periastron = omega_arg_periastron_prior
 
@@ -753,50 +859,50 @@ DO Time_loop = 1, total_interval
    v_rm = 0.0D0                                !Anomalous velocity of each pixel set to zero.
    Total_RM = 0.0D0
 
-   IF (Xpos <= 0 .AND. Zpos >= 0) THEN
-      !Planet is currently in quadrant three so add pi.
-      IF (Zpos == 0) THEN
-         phase_angle = pi/2.0D0
-         Phase_angle_observed = pi/2.0D0
-      ELSE
-         phase_angle = atan(Xpos/Zpos) + pi
-         !Taking into account orbital inclination.
-         Phase_angle_observed = atan(-(sqrt(Xpos**2.0D0 + Ypos**2.0D0))/Zpos) + pi
-      END IF
-   ELSE IF (Xpos >= 0 .AND. Zpos >= 0) THEN
-      !Planet is currently in quadrant four so add pi.
-      IF (Zpos == 0) THEN
-         phase_angle = pi/2.0D0 + pi
-         Phase_angle_observed = pi/2.0D0 + pi
-      ELSE
-         phase_angle = atan(Xpos/Zpos) + pi
-         !Taking into account orbital inclination.
-         Phase_angle_observed = atan((sqrt(Xpos**2.0D0 + Ypos**2.0D0))/Zpos) + pi
-      END IF
-   ELSE IF (Xpos >= 0 .AND. Zpos <= 0) THEN
-      !Planet is currently in quadrant one so add 2pi.
-      IF (Zpos == 0) THEN
-         phase_angle = pi/2.0D0
-         Phase_angle_observed = pi/2.0D0
-      ELSE
-         phase_angle = 2.0D0*pi + atan(Xpos/Zpos)
-         !Taking into account orbital inclination.
-         Phase_angle_observed = 2.0D0*pi + atan((sqrt(Xpos**2.0D0 + Ypos**2.0D0))/Zpos)
-      END IF
-   ELSE IF (Xpos <= 0 .AND. Zpos <= 0) THEN
-      !Planet is currently in quadrant two so add 2pi.
-      IF (Zpos == 0) THEN
-         phase_angle = pi/2.0D0 + pi
-         Phase_angle_observed = pi/2.0D0 + pi
-      ELSE
-         phase_angle = atan(Xpos/Zpos)
-         !Taking into account orbital inclination.
-         Phase_angle_observed = atan(-(sqrt(Xpos**2.0D0 + Ypos**2.0D0))/Zpos)
-      END IF
-   END IF
+!    IF (Xpos <= 0 .AND. Zpos >= 0) THEN
+!       !Planet is currently in quadrant three so add pi.
+!       IF (Zpos == 0) THEN
+!          phase_angle = pi/2.0D0
+!          Phase_angle_observed = pi/2.0D0
+!       ELSE
+!          phase_angle = atan(Xpos/Zpos) + pi
+!          !Taking into account orbital inclination.
+!          Phase_angle_observed = atan(-(sqrt(Xpos**2.0D0 + Ypos**2.0D0))/Zpos) + pi
+!       END IF
+!    ELSE IF (Xpos >= 0 .AND. Zpos >= 0) THEN
+!       !Planet is currently in quadrant four so add pi.
+!       IF (Zpos == 0) THEN
+!          phase_angle = pi/2.0D0 + pi
+!          Phase_angle_observed = pi/2.0D0 + pi
+!       ELSE
+!          phase_angle = atan(Xpos/Zpos) + pi
+!          !Taking into account orbital inclination.
+!          Phase_angle_observed = atan((sqrt(Xpos**2.0D0 + Ypos**2.0D0))/Zpos) + pi
+!       END IF
+!    ELSE IF (Xpos >= 0 .AND. Zpos <= 0) THEN
+!       !Planet is currently in quadrant one so add 2pi.
+!       IF (Zpos == 0) THEN
+!          phase_angle = pi/2.0D0
+!          Phase_angle_observed = pi/2.0D0
+!       ELSE
+!          phase_angle = 2.0D0*pi + atan(Xpos/Zpos)
+!          !Taking into account orbital inclination.
+!          Phase_angle_observed = 2.0D0*pi + atan((sqrt(Xpos**2.0D0 + Ypos**2.0D0))/Zpos)
+!       END IF
+!    ELSE IF (Xpos <= 0 .AND. Zpos <= 0) THEN
+!       !Planet is currently in quadrant two so add 2pi.
+!       IF (Zpos == 0) THEN
+!          phase_angle = pi/2.0D0 + pi
+!          Phase_angle_observed = pi/2.0D0 + pi
+!       ELSE
+!          phase_angle = atan(Xpos/Zpos)
+!          !Taking into account orbital inclination.
+!          Phase_angle_observed = atan(-(sqrt(Xpos**2.0D0 + Ypos**2.0D0))/Zpos)
+!       END IF
+!    END IF
 
    True_phase = acos(sin(True_anomaly + (omega_arg_periastron*(pi/180.0D0)))*sin(Inc*(pi/180.0D0)))
-   Phase_orbit_n = acos(sin(True_anomaly + (omega_arg_periastron*(pi/180.0D0))))
+   !Phase_orbit_n = acos(sin(True_anomaly + (omega_arg_periastron*(pi/180.0D0))))
 
    !If the planet is neither infront of the star (transit) or behind the star (occultation), then calculate the flux being reflected 
    !off the surface of the exoplanet based on its bond albedo, radius, phase angle, etc.
@@ -841,14 +947,18 @@ DO Time_loop = 1, total_interval
                Sub_planet_velocity = best_vsini*(X_pixel_prime/Rs)
                IF ((Dist_center_pixel <= Rs2) .AND. (Dist_planet_pixel <= Rp2)) THEN                
                   IF (linear_quadratic == 'q') THEN
-                     Lblocked2 = Io_Pixel*(1.0D0-q_1*(1.0D0-sqrt(abs(1.0D0-(Dist_center_pixel/Rs2)))) - &
-                                 q_2*(1.0D0 - sqrt(abs(1.0D0-(Dist_center_pixel/Rs2))))**2.0D0)          !Quadratic limb darkening equation.
+                     Lblocked2 = Io_Pixel*(1.0D0-q_1_prior*(1.0D0-sqrt(abs(1.0D0-(Dist_center_pixel/Rs2)))) - &
+                                 q_2_prior*(1.0D0 - sqrt(abs(1.0D0-(Dist_center_pixel/Rs2))))**2.0D0)          !Quadratic limb darkening equation.
                   ELSE
                      Lblocked2 = Io_Pixel*(1.0D0-u*(1.0D0-sqrt(abs(1.0D0-(Dist_center_pixel/Rs2)))))     !First order limb darkening equation.          
                   END IF
                   Lblocked = Lblocked + Lblocked2                                         !First order limb darkening equation.
-                  v_rm = v_rm - ((Lblocked2*Sub_planet_velocity)*((((2.0D0*vturb**2.0D0)+(2.0D0*best_vsini**2.0D0))/((2.0D0*vturb**2.0D0) &
-                         + best_vsini**2.0D0))**(3.0D0/2.0D0))*(1.0D0-((Sub_planet_velocity**2.0D0)/((2.0D0*vturb**2.0D0)+(best_vsini**2.0D0)))))   
+                  IF (test_null == 'F') THEN
+                      v_rm = v_rm - ((Lblocked2*Sub_planet_velocity)*((((2.0D0*vturb**2.0D0)+(2.0D0*best_vsini**2.0D0))/((2.0D0*vturb**2.0D0) &
+                             + best_vsini**2.0D0))**(3.0D0/2.0D0))*(1.0D0-((Sub_planet_velocity**2.0D0)/((2.0D0*vturb**2.0D0)+(best_vsini**2.0D0)))))
+                  ELSE
+                      v_rm = 0.0D0
+                  END IF
                   !Anomalous velocity of each pixel.
                END IF
             END DO
@@ -939,13 +1049,17 @@ DO Time_loop = 1, total_interval
          !The ratio of the area of the planet blocking the star to the area of the star utilizing the first order limb darkening 
          !equation.
          IF (linear_quadratic == 'q') THEN
-            Lblocked = Io_planet*(1.0D0-q_1*(1.0D0-sqrt(abs(1.0D0-(set_distance_center**2.0D0/Rs2)))) - &
-                        q_2*(1.0D0 - sqrt(abs(1.0D0-(set_distance_center**2.0D0/Rs2))))**2.0D0)          !Quadratic limb darkening equation.
+            Lblocked = Io_planet*(1.0D0-q_1_prior*(1.0D0-sqrt(abs(1.0D0-(set_distance_center**2.0D0/Rs2)))) - &
+                        q_2_prior*(1.0D0 - sqrt(abs(1.0D0-(set_distance_center**2.0D0/Rs2))))**2.0D0)          !Quadratic limb darkening equation.
          ELSE
             Lblocked = (Io_planet)*(1.0D0-(u*(1.0D0-sqrt(abs(1.0D0-(set_distance_center**2.0D0/Rs2))))))  
-         END IF                                 
-         v_rm = - ((Lblocked*Sub_planet_velocity)*((((2.0D0*vturb**2.0D0)+(2.0D0*best_vsini**2.0D0))/((2.0D0*vturb**2.0D0) &
-                + best_vsini**2.0D0))**(3.0D0/2.0D0))*(1.0D0-((Sub_planet_velocity**2.0D0)/((2.0D0*vturb**2.0D0)+(best_vsini**2.0D0)))))
+         END IF
+         IF (test_null == 'F') THEN                                 
+             v_rm = - ((Lblocked*Sub_planet_velocity)*((((2.0D0*vturb**2.0D0)+(2.0D0*best_vsini**2.0D0))/((2.0D0*vturb**2.0D0) &
+                    + best_vsini**2.0D0))**(3.0D0/2.0D0))*(1.0D0-((Sub_planet_velocity**2.0D0)/((2.0D0*vturb**2.0D0)+(best_vsini**2.0D0)))))
+         ELSE
+             v_rm = 0.0
+         END IF
          Total_L = 1.0D0 - Lblocked                                             !Total amount of light blocked by the planet.
          Total_RM = 0.0D0 + v_rm                                                  !Total anomalous velocity.
       END IF
@@ -1039,6 +1153,9 @@ END DO
 PRINT *, "num_compare: ", num_compare
 
 Number_points1 = 1
+chi_2 = 0.0D0          !Set chi squared equal to zero.
+r_Chi_2 = 0.0D0
+likelihood = 0.0D0
 model_data_difference = 0
 
 Allocate(Residuals_array(num_compare,3))
@@ -1059,12 +1176,20 @@ DO s = 1, total_interval
       Data_in_fit(Number_points1,3) = RV_offset_data_array(s,3)
       RV_Theory_fit(Number_points1,1) = RV_Theory(s,1)/day_sec
       RV_Theory_fit(Number_points1,2) = RV_Theory(s,2)
+      chi_2 = chi_2 + ((RV_offset_data_array(s,2) - RV_Theory(s,2))/RV_offset_data_array(s,3))**2.0D0
       model_data_difference = model_data_difference + ABS(RV_offset_data_array(s,2) - RV_Theory(s,2)) 
       Number_points1 = Number_points1 + 1              !Counter to determine the number of elements used to calculate sigma squared.
    END IF
 END DO
 
+!Assuming the spin-orbit angle was a free parameter hence the -2 in the reduced chi squared equation.
+r_Chi_2 = chi_2/(Number_points1 - 2)
+!The single likelihood.
+likelihood = dexp(-chi_2/2.0D0)
 PRINT *, "model_data_difference: ", model_data_difference
+PRINT *, "chi_2: ", chi_2
+PRINT *, "r_Chi_2: ", r_Chi_2
+PRINT *, "likelihood: ", likelihood
 PRINT *, "Number_points1: ", Number_points1 - 1
 
 DO s = 1, total_interval
@@ -1123,6 +1248,24 @@ DO l = 1, total_interval
    END DO 
 CLOSE(99)         
 
+
+
+
+!Write the chi squared output from model fit.
+OPEN(unit=99, FILE=output_chi_squared_filename, status='replace', action='write')
+WRITE (99,205) 'Model data difference:', model_data_difference
+WRITE (99,206) 'Chi Squared value:', chi_2
+WRITE (99,207) 'Reduced Chi Squared value:', r_Chi_2
+WRITE (99,208) 'Likelihood:', likelihood
+205  FORMAT(A90, 2X, F15.6)
+206  FORMAT(A90, 2X, F15.6)
+207  FORMAT(A90, 2X, F15.6)
+208  FORMAT(A90, 2X, F15.6)
+CLOSE(99)         
+
+
+
+
 DEALLOCATE(Residuals_array)
 DEALLOCATE(Data_in_fit)
 DEALLOCATE(RV_Theory_fit)
@@ -1163,4 +1306,4 @@ DO i = 1, SIZE(a) - 1
 END DO
 END SUBROUTINE Selection_sort
 
-END PROGRAM RM_effect_residuals
+END PROGRAM RM_effect_residuals_V03

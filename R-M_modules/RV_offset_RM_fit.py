@@ -155,6 +155,8 @@ def RV_offset(Index, template_RV, Index_other, template_other1, Time_transit, Nu
                 fit_count = fit_count + 1
             #endif
 
+            #print("fit_flag: ", fit_flag)
+
             #Now apply the velocity offset to your data.
             RV_my_array.loc[:, 'Time'] = template_RV.loc[:, 'Time']
             RV_my_array.loc[:, 'RV'] = template_RV.loc[:, 'RV'] + (RV_zero_offset - RV_zero_offset_prior) \
@@ -177,10 +179,11 @@ def RV_offset(Index, template_RV, Index_other, template_other1, Time_transit, Nu
                 # mid transit.
                 time = time_data_array.loc[Time_loop, "Time"]
 
+                #print("time: ", time)
+
                 #Set transit flag to False when outside of transit event.
                 transit_flag = False
                 #Set occultation flag to False when outside of secondary transit event.
-                occultation_flag = False
                 time_avoid_flag = False
 
                 if Ecc == 0:
@@ -213,19 +216,16 @@ def RV_offset(Index, template_RV, Index_other, template_other1, Time_transit, Nu
                 True_anomaly = 2.0*(math.atan(math.tan(ecc_anomaly/2.0)*(math.sqrt((1.0 + Ecc)/(1.0 - Ecc)))))
 
                 if Ecc == 0:
-                    #The time of the similation for a specific true_anomaly with the mid transit time equal to 0.
-                    Time_check = ((ecc_anomaly*Orbital_period)/(2.0*pi)) + time_peri_passage
                     #The distance between the center of the planet to the center of the star in a circular orbit.
                     Planet_star_distance = Rorb + Rorb_star
                 #endif
                 else:
-                    #The time of the similation for a specific true_anomaly.
-                    Time_check = (((ecc_anomaly - (Ecc*math.sin(ecc_anomaly)))*Orbital_period)/(2.0*pi)) \
-                                 + time_peri_passage
                     #The distance between the center of the planet to the center of the star in an eccentric orbit.
                     Planet_star_distance = ((Rorb + Rorb_star)*(1.0 - Ecc**2.0))/(1.0 + (Ecc*math.cos(True_anomaly)))
                 #endelse
                 #Time in reference to mid transit time
+
+                #print('Planet_star_distance: ', Planet_star_distance)
                 Time_ref = Time - Time_transit
 
                 #The position of the planet on the x-axis.
@@ -242,31 +242,35 @@ def RV_offset(Index, template_RV, Index_other, template_other1, Time_transit, Nu
                 Dist2 = Xpos**2.0 + Ypos**2.0                   #Square of the planet-star apparent seperation.
                 Distance_center = math.sqrt(Dist2)              #Apparent seperation between the planet and the star.
 
-                if Xpos <= 0 and Zpos >= 0:
-                    #Planet is currently in quadrant three so add pi.
-                    phase_angle = math.atan(Xpos/Zpos) + pi
-                    #Taking into account orbital inclination.
-                    #Phase_angle_observed = math.atan(-(math.sqrt(Xpos**2.0 + Ypos**2.0))/Zpos) + pi
-                elif Xpos >= 0 and Zpos >= 0:
-                    #Planet is currently in quadrant four so add pi.
-                    phase_angle = math.atan(Xpos/Zpos) + pi
-                    #Taking into account orbital inclination.
-                    #Phase_angle_observed = math.atan((math.sqrt(Xpos**2.0 + Ypos**2.0))/Zpos) + pi
-                elif Xpos >= 0 and Zpos <= 0:
-                    #Planet is currently in quadrant one so add 2pi.
-                    phase_angle = 2.0*pi + math.atan(Xpos/Zpos)
-                    #Taking into account orbital inclination.
-                    #Phase_angle_observed = 2.0*pi + math.atan((math.sqrt(Xpos**2.0 + Ypos**2.0))/Zpos)
-                elif Xpos <= 0 and Zpos <= 0:
-                    #Planet is currently in quadrant two so add 2pi.
-                    phase_angle = math.atan(Xpos/Zpos)
-                    #Taking into account orbital inclination.
-                    #Phase_angle_observed = math.atan(-(math.sqrt(Xpos**2.0 + Ypos**2.0))/Zpos)
-                #endif
+                # print('Distance_center: ', Distance_center)
+                # print('Rs + Rp: ', Rs + Rp)
+                # print('Distance_center - (Rs + Rp): ', Distance_center - (Rs + Rp))
+
+                # if Xpos <= 0 and Zpos >= 0:
+                #     #Planet is currently in quadrant three so add pi.
+                #     phase_angle = math.atan(Xpos/Zpos) + pi
+                #     #Taking into account orbital inclination.
+                #     #Phase_angle_observed = math.atan(-(math.sqrt(Xpos**2.0 + Ypos**2.0))/Zpos) + pi
+                # elif Xpos >= 0 and Zpos >= 0:
+                #     #Planet is currently in quadrant four so add pi.
+                #     phase_angle = math.atan(Xpos/Zpos) + pi
+                #     #Taking into account orbital inclination.
+                #     #Phase_angle_observed = math.atan((math.sqrt(Xpos**2.0 + Ypos**2.0))/Zpos) + pi
+                # elif Xpos >= 0 and Zpos <= 0:
+                #     #Planet is currently in quadrant one so add 2pi.
+                #     phase_angle = 2.0*pi + math.atan(Xpos/Zpos)
+                #     #Taking into account orbital inclination.
+                #     #Phase_angle_observed = 2.0*pi + math.atan((math.sqrt(Xpos**2.0 + Ypos**2.0))/Zpos)
+                # elif Xpos <= 0 and Zpos <= 0:
+                #     #Planet is currently in quadrant two so add 2pi.
+                #     phase_angle = math.atan(Xpos/Zpos)
+                #     #Taking into account orbital inclination.
+                #     #Phase_angle_observed = math.atan(-(math.sqrt(Xpos**2.0 + Ypos**2.0))/Zpos)
+                # #endif
 
                 True_phase = math.acos(math.sin(True_anomaly + (omega_arg_periastron*(pi/180.0)))*
                              math.sin(Inc*(pi/180.0)))
-                Phase_orbit_n = math.acos(math.sin(True_anomaly + (omega_arg_periastron*(pi/180.0))))
+                # Phase_orbit_n = math.acos(math.sin(True_anomaly + (omega_arg_periastron*(pi/180.0))))
 
                 if Time_ref >= -time_avoid and Time_ref <= time_avoid:
                     time_avoid_flag = True
@@ -296,6 +300,10 @@ def RV_offset(Index, template_RV, Index_other, template_other1, Time_transit, Nu
                          + (Ecc*math.cos((omega_arg_periastron)*(pi/180.0) + pi)))
                 #endelse
 
+                # print('RV: ', RV)
+                # print('transit_flag: ', transit_flag)
+                # print('time_avoid_flag: ', time_avoid_flag)
+
                 #If transit flag is Y, then indicate the data point to compare.
                 if transit_flag == False and time_avoid_flag == False:
                     num_compare = num_compare + 1
@@ -311,9 +319,9 @@ def RV_offset(Index, template_RV, Index_other, template_other1, Time_transit, Nu
                 Planet_star_distance_array.loc[Time_loop, 'Distance'] = Planet_star_distance
                 Planet_star_distance_array.loc[Time_loop, 'Time'] = Time_ref
 
-                Phase_array.loc[Time_loop, 'Phase'] = phase_angle
+                # Phase_array.loc[Time_loop, 'Phase'] = phase_angle
                 Phase_act_array.loc[Time_loop, 'Phase'] = True_phase
-                Phase_array_n.loc[Time_loop, 'Phase'] = Phase_orbit_n
+                # Phase_array_n.loc[Time_loop, 'Phase'] = Phase_orbit_n
                 True_anomaly_array.loc[Time_loop, 'Phase'] = True_anomaly
                 ecc_anomaly_array.loc[Time_loop, 'Phase'] = ecc_anomaly
                 Xpos_array.loc[Time_loop, 'Position'] = Xpos
@@ -330,6 +338,8 @@ def RV_offset(Index, template_RV, Index_other, template_other1, Time_transit, Nu
             num_compare_index = np.arange(num_compare)
             Model_theory_difference_array = pd.DataFrame(index=num_compare_index, columns=diffs_column)
 
+            #print('num_compare: ', num_compare)
+
             for s in range(total_interval):
                 if data_points_compare.loc[s, 'Points'] == True:
 
@@ -340,6 +350,10 @@ def RV_offset(Index, template_RV, Index_other, template_other1, Time_transit, Nu
                         math.fabs(RV_my_array.loc[s, 'RV'] - RV_theory.loc[s, 'RV'])
                     model_data_difference = model_data_difference \
                                             + math.fabs(RV_my_array.loc[s, 'RV'] - RV_theory.loc[s, 'RV'])
+
+                    #print('chi_2: ', chi_2)
+
+                    #print('model_data_difference: ', model_data_difference)
 
                     # Counter to determine the number of elements used to calculate sigma squared.
                     Number_points1 = Number_points1 + 1
@@ -399,22 +413,22 @@ def RV_offset(Index, template_RV, Index_other, template_other1, Time_transit, Nu
     #for the full parameter space and for just the parameters that will be used for the fit.
     #Also find the parameters which match these lowest values.
     min_chi_squared_total = Chi_squared_array_total["chi2"].min()
-    loc_min_chi_squared_total = Chi_squared_array_total["chi2"].idxmin()
+    loc_min_chi_squared_total = Chi_squared_array_total["chi2"].values.argmin()
     print("mininum chi squared value full parameter space: ", min_chi_squared_total)
     print("mininum chi squared location full parameter space: ", loc_min_chi_squared_total)
     min_reduced_chi_squared_total = Reduced_Chi_Squared_array_total["Rchi2"].min()
-    loc_min_reduced_chi_squared_total = Reduced_Chi_Squared_array_total["Rchi2"].idxmin()
+    loc_min_reduced_chi_squared_total = Reduced_Chi_Squared_array_total["Rchi2"].values.argmin()
     print("mininum reduced chi squared value of full parameter space: ", min_reduced_chi_squared_total)
     print("mininum reduced chi squared location full parameter space: ", loc_min_reduced_chi_squared_total)
 
     #Determine the lowest value for Chi square, reduced Chi square, and where these occur
     #only in the parameter space used for the fit. Also find the parameters which match these lowest values.
     min_chi_squared_fit = Chi_squared_array_fit["chi2"].min()
-    loc_min_chi_squared_fit = Chi_squared_array_fit["chi2"].idxmin()
+    loc_min_chi_squared_fit = Chi_squared_array_fit["chi2"].values.argmin()
     print("mininum chi squared value restrictive fitting parameter space: ", min_chi_squared_fit)
     print("mininum chi squared location restrictive parameter space: ", loc_min_chi_squared_fit)
     min_reduced_chi_squared_fit = Reduced_Chi_Squared_array_fit["Rchi2"].min()
-    loc_min_reduced_chi_squared_fit = Reduced_Chi_Squared_array_fit["Rchi2"].idxmin()
+    loc_min_reduced_chi_squared_fit = Reduced_Chi_Squared_array_fit["Rchi2"].values.argmin()
     print("mininum reduced chi squared value restrictive fitting parameter space: ", min_reduced_chi_squared_fit)
     print("mininum reduced chi squared location restrictive parameter space: ", loc_min_reduced_chi_squared_fit)
 
@@ -477,7 +491,8 @@ def RV_offset(Index, template_RV, Index_other, template_other1, Time_transit, Nu
 
 
     RV_offset_datasets_plus_error_total = Parameter_chi_total_array.loc[0:count_chi_total-1, "RV_offset_datasets"].max()
-    RV_offset_datasets_subscript_max = Parameter_chi_total_array.loc[0:count_chi_total-1, "RV_offset_datasets"].idxmax()
+    RV_offset_datasets_subscript_max = Parameter_chi_total_array.loc[0:count_chi_total-1, "RV_offset_datasets"]\
+        .values.argmax()
     print("RV offset between data sets plus error full parameter space: ",
           RV_offset_datasets_plus_error_total - best_RV_offset_datasets_total)
     chi_square_RV_offset_datasets_plus_total = Parameter_chi_total_array.loc[RV_offset_datasets_subscript_max, "chi2"]
@@ -486,7 +501,8 @@ def RV_offset(Index, template_RV, Index_other, template_other1, Time_transit, Nu
 
     RV_offset_datasets_minus_error_total = Parameter_chi_total_array.loc[0:count_chi_total-1,
                                            "RV_offset_datasets"].min()
-    RV_offset_datasets_subscript_min = Parameter_chi_total_array.loc[0:count_chi_total-1, "RV_offset_datasets"].idxmin()
+    RV_offset_datasets_subscript_min = Parameter_chi_total_array.loc[0:count_chi_total-1, "RV_offset_datasets"]\
+        .values.argmin()
     print("RV offset between data sets minus error full parameter space: ",
           RV_offset_datasets_minus_error_total - best_RV_offset_datasets_total)
     chi_square_RV_offset_datasets_minus_total = Parameter_chi_total_array.loc[RV_offset_datasets_subscript_min, "chi2"]

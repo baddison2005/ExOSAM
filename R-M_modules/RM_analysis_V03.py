@@ -14,6 +14,7 @@ import random
 import numpy as np
 import pandas as pd
 import pyexcel                        # import it to handle CSV files.
+from tkinter import *
 import tkinter as tk
 import matplotlib.pyplot as plt
 import subprocess
@@ -32,7 +33,7 @@ from matplotlib.pyplot import *
 import scipy.optimize as so
 from scipy.ndimage.filters import gaussian_filter
 import corner
-
+from matplotlib.ticker import AutoMinorLocator
 
 
 
@@ -49,6 +50,7 @@ Mj = 1.8986E27                        #Mass of Jupiter in kg.
 Rj = 7.1492E7                         #Radius of Jupiter (in meters).
 RE = 6.3781E6                         #Radius of Earth (in meters if planet is given in Earth radii).
 Long_ascend_node = 90                 #Set to 90. Only measuring the relative or projected inclination of orbit.
+day_sec = 86400.0
 
 #Grab RM directory info and parameter input file.
 root = tk.Tk()
@@ -127,90 +129,135 @@ Rp_Rs_ratio_1sigerr = float(param[31][2])
 Rp_Rs_ratio_norm_prior = param[32][2]
 Rp_Rs_ratio_fixed = param[33][2]
 use_Rp_Rs_ratio = param[34][2]
-vmacro = float(param[35][2])
-beta_rot = float(param[36][2])
-M_pixels = int(param[37][2])
-linear_quadratic = param[38][2]
-u_linear = float(param[39][2])
-q_1 = float(param[40][2])
-q_2 = float(param[41][2])
-Inc_prior = float(param[42][2])
-Inc_end = float(param[43][2])
-Inc_begin = float(param[44][2])
-Inc_1sigerr = float(param[45][2])
-Inc_norm_prior = param[46][2]
-Inc_fixed = param[47][2]
-arg_periastron_prior = float(param[48][2])
-arg_periastron_end = float(param[49][2])
-arg_periastron_begin = float(param[50][2])
-arg_periastron_1sigerr = float(param[51][2])
-arg_periastron_norm_prior = param[52][2]
-arg_periastron_fixed = param[53][2]
-Ecc_prior = float(param[54][2])
-Ecc_end = float(param[55][2])
-Ecc_begin = float(param[56][2])
-Ecc_1sigerr = float(param[57][2])
-Ecc_norm_prior = param[58][2]
-Ecc_fixed = param[59][2]
-Mp_prior = float(param[60][2])
-Mp_end = float(param[61][2])
-Mp_begin = float(param[62][2])
-Mp_1sigerr = float(param[63][2])
-Mp_norm_prior = param[64][2]
-Mp_fixed = param[65][2]
-Rp_prior = float(param[66][2])
-Rp_end = float(param[67][2])
-Rp_begin = float(param[68][2])
-Rp_1sigerr = float(param[69][2])
-Rp_norm_prior = param[70][2]
-Rp_fixed = param[71][2]
-Orbital_period_prior = float(param[72][2])
-Orbital_period_end = float(param[73][2])
-Orbital_period_begin = float(param[74][2])
-Orbital_period_1sigerr = float(param[75][2])
-Orbital_period_norm_prior = param[76][2]
-Orbital_period_fixed = param[77][2]
-JD_time_mid_transit_prior = float(param[78][2])
-JD_time_mid_transit_end = float(param[79][2])
-JD_time_mid_transit_begin = float(param[80][2])
-JD_time_mid_transit_1sigerr = float(param[81][2])
-JD_time_mid_transit_norm_prior = param[82][2]
-JD_time_mid_transit_fixed = param[83][2]
-Albedo = float(param[84][2])
-RV_zero_offset_prior = float(param[85][2])
-RV_zero_offset_end = float(param[86][2])
-RV_zero_offset_begin = float(param[87][2])
-RV_zero_offset_interval = float(param[88][2])
-RV_zero_offset_1sigerr = float(param[89][2])
-RV_zero_offset_norm_prior = param[90][2]
-RV_zero_offset_fixed = param[91][2]
-RV_offset_datasets_prior = float(param[92][2])
-RV_offset_datasets_end = float(param[93][2])
-RV_offset_datasets_begin = float(param[94][2])
-RV_offset_datasets_interval = float(param[95][2])
-RV_offset_datasets_1sigerr = float(param[96][2])
-RV_offset_datasets_norm_prior = param[97][2]
-RV_offset_datasets_fixed = param[98][2]
-vsini_prior = float(param[99][2])
-vsini_end = float(param[100][2])
-vsini_begin = float(param[101][2])
-vsini_1sigerr = float(param[102][2])
-vsini_norm_prior = param[103][2]
-impose_prior_vsini = param[104][2]
-vsini_fixed = param[105][2]
-stellar_rotation_angle_prior = float(param[106][2])
-stellar_rotation_angle_end = float(param[107][2])
-stellar_rotation_angle_begin = float(param[108][2])
-stellar_rotation_angle_1sigerr = float(param[109][2])
-stellar_rotation_angle_norm_prior = param[110][2]
-impose_prior_stellar_rotation_angle = param[111][2]
-stellar_rotation_angle_fixed = param[112][2]
-mcmc_accepted_iteration_size = int(param[113][2])
-number_mcmc_walkers = int(param[114][2])
-scale_factor = float(param[115][2])
-chi_squared_change = float(param[116][2])
-chi_squared_change_fit = float(param[117][2])
-use_out_transit_rv_for_fit = param[118][2]
+
+vmacro_prior = float(param[35][2])
+vmacro_end = float(param[36][2])
+vmacro_begin = float(param[37][2])
+vmacro_1sigerr = float(param[38][2])
+vmacro_norm_prior = param[39][2]
+vmacro_fixed = param[40][2]
+
+beta_rot = float(param[41][2])
+M_pixels = int(param[42][2])
+linear_quadratic = param[43][2]
+u_linear = float(param[44][2])
+
+q_1_prior = float(param[45][2])
+q_1_end = float(param[46][2])
+q_1_begin = float(param[47][2])
+q_1_1sigerr = float(param[48][2])
+
+q_2_prior = float(param[49][2])
+q_2_end = float(param[50][2])
+q_2_begin = float(param[51][2])
+q_2_1sigerr = float(param[52][2])
+q_norm_prior = param[53][2]
+q_fixed = param[54][2]
+
+Inc_prior = float(param[55][2])
+Inc_end = float(param[56][2])
+Inc_begin = float(param[57][2])
+Inc_1sigerr = float(param[58][2])
+Inc_norm_prior = param[59][2]
+Inc_fixed = param[60][2]
+
+Impact_prior = float(param[61][2])
+Impact_end = float(param[62][2])
+Impact_begin = float(param[63][2])
+Impact_1sigerr = float(param[64][2])
+Impact_norm_prior = param[65][2]
+Impact_fixed = param[66][2]
+use_Impact = param[67][2]
+
+Rorb_Rs_prior = float(param[68][2])
+Rorb_Rs_end = float(param[69][2])
+Rorb_Rs_begin = float(param[70][2])
+Rorb_Rs_1sigerr = float(param[71][2])
+Rorb_Rs_norm_prior = param[72][2]
+Rorb_Rs_fixed = param[73][2]
+use_Rorb_Rs_ratio = param[74][2]
+
+arg_periastron_prior = float(param[75][2])
+arg_periastron_end = float(param[76][2])
+arg_periastron_begin = float(param[77][2])
+arg_periastron_1sigerr = float(param[78][2])
+arg_periastron_norm_prior = param[79][2]
+arg_periastron_fixed = param[80][2]
+Ecc_prior = float(param[81][2])
+Ecc_end = float(param[82][2])
+Ecc_begin = float(param[83][2])
+Ecc_1sigerr = float(param[84][2])
+Ecc_norm_prior = param[85][2]
+Ecc_fixed = param[86][2]
+Mp_prior = float(param[87][2])
+Mp_end = float(param[88][2])
+Mp_begin = float(param[89][2])
+Mp_1sigerr = float(param[90][2])
+Mp_norm_prior = param[91][2]
+Mp_fixed = param[92][2]
+Rp_prior = float(param[93][2])
+Rp_end = float(param[94][2])
+Rp_begin = float(param[95][2])
+Rp_1sigerr = float(param[96][2])
+Rp_norm_prior = param[97][2]
+Rp_fixed = param[98][2]
+Orbital_period_prior = float(param[99][2])
+Orbital_period_end = float(param[100][2])
+Orbital_period_begin = float(param[101][2])
+Orbital_period_1sigerr = float(param[102][2])
+Orbital_period_norm_prior = param[103][2]
+Orbital_period_fixed = param[104][2]
+JD_time_mid_transit_prior = float(param[105][2])
+JD_time_mid_transit_end = float(param[106][2])
+JD_time_mid_transit_begin = float(param[107][2])
+JD_time_mid_transit_1sigerr = float(param[108][2])
+JD_time_mid_transit_norm_prior = param[109][2]
+JD_time_mid_transit_fixed = param[110][2]
+Albedo = float(param[111][2])
+RV_zero_offset_prior = float(param[112][2])
+RV_zero_offset_end = float(param[113][2])
+RV_zero_offset_begin = float(param[114][2])
+RV_zero_offset_interval = float(param[115][2])
+RV_zero_offset_1sigerr = float(param[116][2])
+RV_zero_offset_norm_prior = param[117][2]
+RV_zero_offset_fixed = param[118][2]
+RV_offset_datasets_prior = float(param[119][2])
+RV_offset_datasets_end = float(param[120][2])
+RV_offset_datasets_begin = float(param[121][2])
+RV_offset_datasets_interval = float(param[122][2])
+RV_offset_datasets_1sigerr = float(param[123][2])
+RV_offset_datasets_norm_prior = param[124][2]
+RV_offset_datasets_fixed = param[125][2]
+
+K_amp_prior = float(param[126][2])
+K_amp_end = float(param[127][2])
+K_amp_begin = float(param[128][2])
+K_amp_1sigerr = float(param[129][2])
+K_amp_norm_prior = param[130][2]
+K_amp_fixed = param[131][2]
+use_K_amp = param[132][2]
+
+vsini_prior = float(param[133][2])
+vsini_end = float(param[134][2])
+vsini_begin = float(param[135][2])
+vsini_1sigerr = float(param[136][2])
+vsini_norm_prior = param[137][2]
+impose_prior_vsini = param[138][2]
+vsini_fixed = param[139][2]
+stellar_rotation_angle_prior = float(param[140][2])
+stellar_rotation_angle_end = float(param[141][2])
+stellar_rotation_angle_begin = float(param[142][2])
+stellar_rotation_angle_1sigerr = float(param[143][2])
+stellar_rotation_angle_norm_prior = param[144][2]
+impose_prior_stellar_rotation_angle = param[145][2]
+stellar_rotation_angle_fixed = param[146][2]
+mcmc_accepted_iteration_size = int(param[147][2])
+number_mcmc_walkers = int(param[148][2])
+scale_factor = float(param[149][2])
+chi_squared_change = float(param[150][2])
+chi_squared_change_fit = float(param[151][2])
+use_out_transit_rv_for_fit = param[152][2]
+test_null = param[153][2]
 
 
 
@@ -271,49 +318,73 @@ else:
 
 
 #---------------------------------------Planetary orbital calculations-------------------------------------------------#
-if Jupiter_units == 'Y':
-    Mp = Mp_prior * Mj
-    if use_Rp_Rs_ratio == 'Y':
-        Rp = Rp_Rs_ratio_prior * (Rs_solar_prior * Rss)
-    else:
-        Rp = Rp_prior * Rj
-    #endelse
-#endif
 
-if Jupiter_units == 'N':
-    Mp = Mp_prior * Me
-    if use_Rp_Rs_ratio == 'Y':
-        Rp = Rp_Rs_ratio_prior * (Rs_solar_prior * Rss)
-    else:
-        Rp = Rp_prior * RE
-    #endelse
-#endif
+
 
 Orbital_period_day = Orbital_period_prior
 Orbital_period = Orbital_period_prior*3600.0*24.0
 JD_time_mid_transit = JD_time_mid_transit_prior
 
 Ms = Mss * Ms_solar_prior                      #Mass of the star (in kg).
-Rs = Rss * Rs_solar_prior                      #Radius of star (in meters).
+if use_Impact == 'Y' and use_Rorb_Rs_ratio == 'Y':
+    Inc_prior = math.acos((Impact_prior/(Rorb_Rs_prior))*((1.0 + (Ecc_prior*math.sin(arg_periastron_prior*
+                (pi/180.0))))/(1.0 - Ecc_prior**2.0)))*(180.0/pi)
+    Transit_length = (Orbital_period/pi) * math.asin((1.0/Rorb_Rs_prior)* \
+                           (math.sqrt((1.0 + Rp_Rs_ratio_prior)**2.0 - Impact_prior**2.0)/
+                            math.sin(Inc_prior*(pi/180.0)))) * (math.sqrt(1.0 - Ecc_prior**2.0)/
+                            (1.0 + (Ecc_prior*math.sin(arg_periastron_prior*(pi/180.0)))))
+#endif
+
+if use_K_amp == 'Y' and Mp_fixed == 'Y' and Ecc_prior == 0:
+    Mp = (Orbital_period/(2.0*pi*G))**(1.0/3.0)*((Ms**(2.0/3.0)*K_amp_prior)/math.sin(Inc_prior*(pi/180.0)))
+else:
+    if Jupiter_units == 'Y':
+        Mp = Mp_prior * Mj
+    else:
+        Mp = Mp_prior * Me
+    #endif
+#endif
+
+Rorb = ((Orbital_period ** (2.0) * G * (Ms + Mp)) / (4.0 * pi ** (2.0))) ** (1.0 / 3.0)  # Semi-major axis
+Rorb_star = ((Orbital_period ** (2.0) * G * ((Mp ** (3.0)) / (Ms + Mp) ** (2.0))) / (4.0 * pi ** (2.0))) ** (1.0 / 3.0)  # Star Semi-major axis.
+
+if use_Rorb_Rs_ratio == 'Y':
+    Rs = Rorb/(Rorb_Rs_prior)
+else:
+    Rs = Rss * Rs_solar_prior
+#endif
+
+if use_Rp_Rs_ratio == 'Y':
+    Rp = Rp_Rs_ratio_prior * Rs
+else:
+    if Jupiter_units == 'Y':
+        Rp = Rp_prior * Rj
+    else:
+        Rp = Rp_prior * RE
+    #endelse
+#endif
+
 RV = 0.0                                       #Set the RV to zero.
-Rorb = ((Orbital_period**(2.0)*G*(Ms + Mp))/(4.0*pi**(2.0)))**(1.0/3.0)     #Semi-major axis
-Rorb_star = ((Orbital_period**(2.0)*G*((Mp**(3.0))/(Ms + Mp)**(2.0)))/(4.0*pi**(2.0)))**(1.0/3.0) #Star Semi-major axis.
 Rs2 = Rs**2.0                                   #Variable to speed up calculations.
 Rp2 = Rp**2.0                                   #Variable to speed up calculations.
 
 Ecc = Ecc_prior
 Inc = Inc_prior
 
-if Ecc == 0:
-    #Maximum amplitude caused by the exoplanet in a circular orbit.
-    #RVamplitude = (Mp/Ms)*sqrt((G*(Ms + Mp))/Rorb)*sin(Inc*(pi/180.0D0))
-    RVamplitude = math.sqrt((G*(Mp**(3.0))*(math.sin(Inc*(pi/180.0)))**(3.0))/
-                  (Rorb_star*math.sin(Inc*(pi/180.0))*(Ms + Mp)**(2.0)))
+if use_K_amp == 'Y':
+    RVamplitude = K_amp_prior
 else:
-    #Maximum amplitude caused by the exoplanet in an eccentric orbit.
-    #RVamplitude = (1.0D0/sqrt(1.0D0 - Ecc^2.0D0))*(Mp/Ms)*sqrt((G*(Ms + Mp))/Rorb)*sin(Inc*(pi/180.0D0))
-    RVamplitude = math.sqrt((G*(Mp**(3.0))*(math.sin(Inc*(pi/180.0)))**(3.0))/
-                  ((1.0 - Ecc**2.0)*Rorb_star*math.sin(Inc*(pi/180.0))*(Ms + Mp)**(2.0)))
+    if Ecc == 0:
+        #Maximum amplitude caused by the exoplanet in a circular orbit.
+        #RVamplitude = (Mp/Ms)*sqrt((G*(Ms + Mp))/Rorb)*sin(Inc*(pi/180.0D0))
+        RVamplitude = math.sqrt((G*(Mp**(3.0))*(math.sin(Inc*(pi/180.0)))**(3.0))/
+                      (Rorb_star*math.sin(Inc*(pi/180.0))*(Ms + Mp)**(2.0)))
+    else:
+        #Maximum amplitude caused by the exoplanet in an eccentric orbit.
+        #RVamplitude = (1.0D0/sqrt(1.0D0 - Ecc^2.0D0))*(Mp/Ms)*sqrt((G*(Ms + Mp))/Rorb)*sin(Inc*(pi/180.0D0))
+        RVamplitude = math.sqrt((G*(Mp**(3.0))*(math.sin(Inc*(pi/180.0)))**(3.0))/
+                      ((1.0 - Ecc**2.0)*Rorb_star*math.sin(Inc*(pi/180.0))*(Ms + Mp)**(2.0)))
+    #endelse
 #endelse
 
 
@@ -458,8 +529,6 @@ total_datalength = num_my_rv + num_rv1
 
 
 
-
-
 #--------------------------------------Set the required units for simulation-------------------------------------------#
 omega_arg_periastron_prior = arg_periastron_prior - 270.0 + Long_ascend_node         #Argument of the periastron as
                                                                                      #as measured from the transit mid
@@ -529,14 +598,23 @@ else:
 #endelse
 print("Time_transit", Time_transit)
 
-radius_ratio = Rp/Rs
 
-impact_prior = ((Rorb*math.cos(Inc*(pi/180.0)))/Rs)*((1.0 - Ecc**2.0)
-                / (1.0 + (Ecc*math.sin(omega_arg_periastron*(pi/180.0)))))
 
-Transit_length=((Orbital_period)/pi)*math.asin((Rs/Rorb)*(math.sqrt(abs((1.0 + radius_ratio)**2.0 - impact_prior**2.0))
-                 / math.sin(Inc*(pi/180.0))))*(math.sqrt(1.0 - Ecc**2.0)/(1.0 + (Ecc*math.sin(omega_arg_periastron*
-                 (pi/180.0)))))
+
+if use_Rp_Rs_ratio=='Y':
+    radius_ratio = Rp_Rs_ratio_prior
+else:
+    radius_ratio = Rp / Rs
+#endelse
+
+if use_Impact == 'N' or use_Rorb_Rs_ratio == 'N':
+    impact_prior = ((Rorb * math.cos(Inc * (pi / 180.0))) / Rs) * ((1.0 - Ecc ** 2.0)
+                    / (1.0 + (Ecc * math.sin(omega_arg_periastron * (pi / 180.0)))))
+
+    Transit_length = ((Orbital_period) / pi) * math.asin((Rs / Rorb) * (math.sqrt(abs((1.0 + radius_ratio) ** 2.0
+                        - impact_prior ** 2.0)) / math.sin(Inc * (pi / 180.0)))) * (math.sqrt(1.0 - Ecc ** 2.0) /
+                        (1.0 + (Ecc * math.sin(omega_arg_periastron * (pi / 180.0)))))
+#END IF
 
 time_avoid = (Transit_length/2.0) + Time_compare_vel
 print("Length of time to exclude from comparison (i.e. during planetary transit): ", time_avoid)
@@ -586,6 +664,9 @@ if other_RV_files == 'Y' and RV_offset_datasets_interval_size > 0:
         Number_RV_zero_offset_iterations = int(((RV_zero_offset_end - RV_zero_offset_begin)/1) + 1)
     #endelse
 
+
+
+
     RV_offset_datasets_new_prior, RV_offset_datasets_new_end, RV_offset_datasets_new_begin, \
     RV_offset_datasets_new_interval, RV_offset_datasets_new_1sigerr = \
     RV_offset(Index, template_RV, Index_other, template_other1, Time_transit, Number_iterations_total,
@@ -597,6 +678,10 @@ if other_RV_files == 'Y' and RV_offset_datasets_interval_size > 0:
               other_data_plotting_symbols_array, RM_data_output, other_data_output)
 
 #endif
+
+
+
+
 if other_RV_files != 'Y' or RV_offset_datasets_interval_size == 0:
     #This part outputs all the values found in the model in a text file.
     offset_between_datasets = open(directory_location + 'offset_between_datasets.txt', 'w')
@@ -711,6 +796,12 @@ pointer_file_output.close()
 
 
 
+#Set test_null_hypothesis to false first.
+test_null_hypothesis_text = 'F'
+test_null_file_output = open(output_temp_data + 'test_null.txt', 'w')
+test_null_file_output.write('{:1}\n'.format(test_null_hypothesis_text))
+test_null_file_output.close()
+
 #Output data for Fortran to read in.
 param_output = open(directory_input + 'parameters.txt', 'w')
 param_output.write('{:>150}\n'.format(RM_data_output))
@@ -761,15 +852,28 @@ param_output.write('{:1}\n'.format(Rp_Rs_ratio_norm_prior))
 param_output.write('{:1}\n'.format(Rp_Rs_ratio_fixed))
 param_output.write('{:1}\n'.format(use_Rp_Rs_ratio))
 
-param_output.write('{:<50.5f}\n'.format(vmacro))
+param_output.write('{:<50.5f}\n'.format(vmacro_prior))
+param_output.write('{:<50.5f}\n'.format(vmacro_end))
+param_output.write('{:<50.5f}\n'.format(vmacro_begin))
+param_output.write('{:<50.5f}\n'.format(vmacro_1sigerr))
+param_output.write('{:1}\n'.format(vmacro_norm_prior))
+param_output.write('{:1}\n'.format(vmacro_fixed))
 param_output.write('{:<50.5f}\n'.format(beta_rot))
 
 param_output.write('{:<20d}\n'.format(M_pixels))
 
 param_output.write('{:1}\n'.format(linear_quadratic))
 param_output.write('{:<50.5f}\n'.format(u_linear))
-param_output.write('{:<50.5f}\n'.format(q_1))
-param_output.write('{:<50.5f}\n'.format(q_2))
+param_output.write('{:<50.5f}\n'.format(q_1_prior))
+param_output.write('{:<50.5f}\n'.format(q_1_end))
+param_output.write('{:<50.5f}\n'.format(q_1_begin))
+param_output.write('{:<50.5f}\n'.format(q_1_1sigerr))
+param_output.write('{:<50.5f}\n'.format(q_2_prior))
+param_output.write('{:<50.5f}\n'.format(q_2_end))
+param_output.write('{:<50.5f}\n'.format(q_2_begin))
+param_output.write('{:<50.5f}\n'.format(q_2_1sigerr))
+param_output.write('{:1}\n'.format(q_norm_prior))
+param_output.write('{:1}\n'.format(q_fixed))
 
 param_output.write('{:<50.5f}\n'.format(Inc_prior))
 param_output.write('{:<50.5f}\n'.format(Inc_end))
@@ -838,6 +942,30 @@ param_output.write('{:<50.5f}\n'.format(RV_offset_datasets_new_1sigerr))
 param_output.write('{:1}\n'.format(RV_offset_datasets_norm_prior))
 param_output.write('{:1}\n'.format(RV_offset_datasets_fixed))
 
+param_output.write('{:<50.5f}\n'.format(K_amp_prior))
+param_output.write('{:<50.5f}\n'.format(K_amp_end))
+param_output.write('{:<50.5f}\n'.format(K_amp_begin))
+param_output.write('{:<50.5f}\n'.format(K_amp_1sigerr))
+param_output.write('{:1}\n'.format(K_amp_norm_prior))
+param_output.write('{:1}\n'.format(K_amp_fixed))
+param_output.write('{:1}\n'.format(use_K_amp))
+
+param_output.write('{:<50.5f}\n'.format(Impact_prior))
+param_output.write('{:<50.5f}\n'.format(Impact_end))
+param_output.write('{:<50.5f}\n'.format(Impact_begin))
+param_output.write('{:<50.5f}\n'.format(Impact_1sigerr))
+param_output.write('{:1}\n'.format(Impact_norm_prior))
+param_output.write('{:1}\n'.format(Impact_fixed))
+param_output.write('{:1}\n'.format(use_Impact))
+
+param_output.write('{:<50.5f}\n'.format(Rorb_Rs_prior))
+param_output.write('{:<50.5f}\n'.format(Rorb_Rs_end))
+param_output.write('{:<50.5f}\n'.format(Rorb_Rs_begin))
+param_output.write('{:<50.5f}\n'.format(Rorb_Rs_1sigerr))
+param_output.write('{:1}\n'.format(Rorb_Rs_norm_prior))
+param_output.write('{:1}\n'.format(Rorb_Rs_fixed))
+param_output.write('{:1}\n'.format(use_Rorb_Rs_ratio))
+
 param_output.write('{:<50.5f}\n'.format(vsini_prior))
 param_output.write('{:<50.5f}\n'.format(vsini_end))
 param_output.write('{:<50.5f}\n'.format(vsini_begin))
@@ -867,10 +995,10 @@ param_output.close()
 
 
 #------------------------------------------Compile and run MCMC Fortran program----------------------------------------#
-cmd1 = "gfortran -c -ffree-line-length-none -std=f2008 -O3 ExOSAM_RM_effect_V02.f08 init_seed.f08 numz.f08 ran_mod.f08"
+cmd1 = "gfortran -c -ffree-line-length-none -std=f2008 -O3 ExOSAM_RM_effect_V03.f08 init_seed.f08 numz.f08 ran_mod.f08"
 process1 = subprocess.call(cmd1, shell=True, stdout=subprocess.PIPE)
 
-cmd2 = "gfortran ExOSAM_RM_effect_V02.o init_seed.o numz.o ran_mod.o"
+cmd2 = "gfortran ExOSAM_RM_effect_V03.o init_seed.o numz.o ran_mod.o"
 process2 = subprocess.call(cmd2, shell=True, stdout=subprocess.PIPE)
 
 cmd3 = "./a.out"
@@ -914,6 +1042,12 @@ JD_time_mid_transit_mcmc_array_input = input_temp_data + 'JD_time_mid_transit_MC
 Orbital_period_mcmc_array_input = input_temp_data + 'Orbital_period_MCMC_array.txt'
 RV_zero_offset_mcmc_array_input = input_temp_data + 'RV_zero_offset_MCMC_array.txt'
 RV_offset_datasets_mcmc_array_input = input_temp_data + 'RV_offset_datasets_MCMC_array.txt'
+vmacro_mcmc_array_input = input_temp_data + 'vmacro_MCMC_array.txt'
+q_1_mcmc_array_input = input_temp_data + 'q_1_MCMC_array.txt'
+q_2_mcmc_array_input = input_temp_data + 'q_2_MCMC_array.txt'
+K_amp_mcmc_array_input = input_temp_data + 'K_amp_MCMC_array.txt'
+Impact_mcmc_array_input = input_temp_data + 'Impact_MCMC_array.txt'
+Rorb_Rs_mcmc_array_input = input_temp_data + 'Rorb_Rs_MCMC_array.txt'
 
 Chi_squared_name_array = input_temp_data + 'chi_squared_array_mcmc.txt'
 red_Chi_squared_name_array = input_temp_data + 'reduced_chi_squared_array_mcmc.txt'
@@ -1038,6 +1172,52 @@ RV_offset_datasets_mcmc_array = pd.DataFrame(index=index_RV_offset_datasets_mcmc
 RV_offset_datasets_mcmc_data = np.genfromtxt(RV_offset_datasets_mcmc_array_input, dtype='float')
 length_RV_offset_datasets_array_data = len(RV_offset_datasets_mcmc_data)
 
+vmacro_mcmc_nomask_array = pd.DataFrame(index=index_mcmc_nomask_array, columns=['RV'], dtype='float')
+index_vmacro_mcmc_array = np.arange(int(mcmc_accepted_iteration_size/0.05))
+vmacro_mcmc_array = pd.DataFrame(index=index_vmacro_mcmc_array,
+                                               columns=columns_for_mcmc_arrays, dtype='float')
+vmacro_mcmc_data = np.genfromtxt(vmacro_mcmc_array_input, dtype='float')
+length_vmacro_array_data = len(vmacro_mcmc_data)
+
+q_1_mcmc_nomask_array = pd.DataFrame(index=index_mcmc_nomask_array, columns=['value'], dtype='float')
+index_q_1_mcmc_array = np.arange(int(mcmc_accepted_iteration_size/0.05))
+q_1_mcmc_array = pd.DataFrame(index=index_q_1_mcmc_array,
+                                               columns=columns_for_mcmc_arrays, dtype='float')
+q_1_mcmc_data = np.genfromtxt(q_1_mcmc_array_input, dtype='float')
+length_q_1_array_data = len(q_1_mcmc_data)
+
+q_2_mcmc_nomask_array = pd.DataFrame(index=index_mcmc_nomask_array, columns=['value'], dtype='float')
+index_q_2_mcmc_array = np.arange(int(mcmc_accepted_iteration_size/0.05))
+q_2_mcmc_array = pd.DataFrame(index=index_q_2_mcmc_array,
+                                               columns=columns_for_mcmc_arrays, dtype='float')
+q_2_mcmc_data = np.genfromtxt(q_2_mcmc_array_input, dtype='float')
+length_q_2_array_data = len(q_2_mcmc_data)
+
+K_amp_mcmc_nomask_array = pd.DataFrame(index=index_mcmc_nomask_array, columns=['RV'], dtype='float')
+index_K_amp_mcmc_array = np.arange(int(mcmc_accepted_iteration_size/0.05))
+K_amp_mcmc_array = pd.DataFrame(index=index_K_amp_mcmc_array,
+                                               columns=columns_for_mcmc_arrays, dtype='float')
+K_amp_mcmc_data = np.genfromtxt(K_amp_mcmc_array_input, dtype='float')
+length_K_amp_array_data = len(K_amp_mcmc_data)
+
+Impact_mcmc_nomask_array = pd.DataFrame(index=index_mcmc_nomask_array, columns=['value'], dtype='float')
+index_Impact_mcmc_array = np.arange(int(mcmc_accepted_iteration_size/0.05))
+Impact_mcmc_array = pd.DataFrame(index=index_Impact_mcmc_array,
+                                               columns=columns_for_mcmc_arrays, dtype='float')
+Impact_mcmc_data = np.genfromtxt(Impact_mcmc_array_input, dtype='float')
+length_Impact_array_data = len(Impact_mcmc_data)
+
+Rorb_Rs_mcmc_nomask_array = pd.DataFrame(index=index_mcmc_nomask_array, columns=['value'], dtype='float')
+index_Rorb_Rs_mcmc_array = np.arange(int(mcmc_accepted_iteration_size/0.05))
+Rorb_Rs_mcmc_array = pd.DataFrame(index=index_Rorb_Rs_mcmc_array,
+                                               columns=columns_for_mcmc_arrays, dtype='float')
+Rorb_Rs_mcmc_data = np.genfromtxt(Rorb_Rs_mcmc_array_input, dtype='float')
+length_Rorb_Rs_array_data = len(Rorb_Rs_mcmc_data)
+
+
+
+
+
 begin_element = 0
 for col in range(number_mcmc_walkers):
     vsini_mcmc_array['walker' + str(col)] = vsini_mcmc_data[:,col]
@@ -1054,6 +1234,13 @@ for col in range(number_mcmc_walkers):
     Orbital_period_mcmc_array['walker' + str(col)] = Orbital_period_mcmc_data[:,col]
     RV_zero_offset_mcmc_array['walker' + str(col)] = RV_zero_offset_mcmc_data[:,col]
     RV_offset_datasets_mcmc_array['walker' + str(col)] = RV_offset_datasets_mcmc_data[:,col]
+    vmacro_mcmc_array['walker' + str(col)] = vmacro_mcmc_data[:, col]
+    q_1_mcmc_array['walker' + str(col)] = q_1_mcmc_data[:, col]
+    q_2_mcmc_array['walker' + str(col)] = q_2_mcmc_data[:, col]
+    K_amp_mcmc_array['walker' + str(col)] = K_amp_mcmc_data[:, col]
+    Impact_mcmc_array['walker' + str(col)] = Impact_mcmc_data[:, col]
+    Rorb_Rs_mcmc_array['walker' + str(col)] = Rorb_Rs_mcmc_data[:, col]
+
     if col == 0:
         vsini_mcmc_nomask_array.loc[0:nonmasked_elements[col]-1, 'vsini'] = \
             vsini_mcmc_data[0:nonmasked_elements[col], col]
@@ -1083,6 +1270,18 @@ for col in range(number_mcmc_walkers):
             RV_zero_offset_mcmc_data[0:nonmasked_elements[col], col]
         RV_offset_datasets_mcmc_nomask_array.loc[0:nonmasked_elements[col] - 1, 'RV'] = \
             RV_offset_datasets_mcmc_data[0:nonmasked_elements[col], col]
+        vmacro_mcmc_nomask_array.loc[0:nonmasked_elements[col] - 1, 'RV'] = \
+            vmacro_mcmc_data[0:nonmasked_elements[col], col]
+        q_1_mcmc_nomask_array.loc[0:nonmasked_elements[col] - 1, 'value'] = \
+            q_1_mcmc_data[0:nonmasked_elements[col], col]
+        q_2_mcmc_nomask_array.loc[0:nonmasked_elements[col] - 1, 'value'] = \
+            q_2_mcmc_data[0:nonmasked_elements[col], col]
+        K_amp_mcmc_nomask_array.loc[0:nonmasked_elements[col] - 1, 'RV'] = \
+            K_amp_mcmc_data[0:nonmasked_elements[col], col]
+        Impact_mcmc_nomask_array.loc[0:nonmasked_elements[col] - 1, 'value'] = \
+            Impact_mcmc_data[0:nonmasked_elements[col], col]
+        Rorb_Rs_mcmc_nomask_array.loc[0:nonmasked_elements[col] - 1, 'value'] = \
+            Rorb_Rs_mcmc_data[0:nonmasked_elements[col], col]
     else:
         vsini_mcmc_nomask_array.loc[begin_element:begin_element+nonmasked_elements[col]-1, 'vsini'] = \
             vsini_mcmc_data[0:nonmasked_elements[col], col]
@@ -1112,6 +1311,18 @@ for col in range(number_mcmc_walkers):
             RV_zero_offset_mcmc_data[0:nonmasked_elements[col], col]
         RV_offset_datasets_mcmc_nomask_array.loc[begin_element:begin_element + nonmasked_elements[col] - 1, 'RV'] = \
             RV_offset_datasets_mcmc_data[0:nonmasked_elements[col], col]
+        vmacro_mcmc_nomask_array.loc[begin_element:begin_element + nonmasked_elements[col] - 1, 'RV'] = \
+            vmacro_mcmc_data[0:nonmasked_elements[col], col]
+        q_1_mcmc_nomask_array.loc[begin_element:begin_element + nonmasked_elements[col] - 1, 'value'] = \
+            q_1_mcmc_data[0:nonmasked_elements[col], col]
+        q_2_mcmc_nomask_array.loc[begin_element:begin_element + nonmasked_elements[col] - 1, 'value'] = \
+            q_2_mcmc_data[0:nonmasked_elements[col], col]
+        K_amp_mcmc_nomask_array.loc[begin_element:begin_element + nonmasked_elements[col] - 1, 'RV'] = \
+            K_amp_mcmc_data[0:nonmasked_elements[col], col]
+        Impact_mcmc_nomask_array.loc[begin_element:begin_element + nonmasked_elements[col] - 1, 'value'] = \
+            Impact_mcmc_data[0:nonmasked_elements[col], col]
+        Rorb_Rs_mcmc_nomask_array.loc[begin_element:begin_element + nonmasked_elements[col] - 1, 'value'] = \
+            Rorb_Rs_mcmc_data[0:nonmasked_elements[col], col]
     #endelse
     begin_element = begin_element + nonmasked_elements[col]
 #endfor
@@ -1162,6 +1373,7 @@ format_read1 = ff.FortranRecordReader('(92X, F15.6)')
 line = best_overall_parameters.readline()
 min_chi_squared_total = format_read1.read(line)[0]
 format_read2 = ff.FortranRecordReader('(92X, I10, 1X, I10)')
+format_read3 = ff.FortranRecordReader('(92X, I10)')
 line = best_overall_parameters.readline()
 loc_min_chi_squared_total = format_read2.read(line)
 line = best_overall_parameters.readline()
@@ -1248,6 +1460,42 @@ best_omega_arg_periastron_mcmc_mean = format_read1.read(line)[0]
 line = best_overall_parameters.readline()
 omega_arg_periastron_stand_dev_mcmc_mean = format_read1.read(line)[0]
 
+line = best_overall_parameters.readline()
+best_vmacro_mcmc_mean = format_read1.read(line)[0]
+line = best_overall_parameters.readline()
+vmacro_stand_dev_mcmc_mean = format_read1.read(line)[0]
+
+line = best_overall_parameters.readline()
+best_q_1_mcmc_mean = format_read1.read(line)[0]
+line = best_overall_parameters.readline()
+q_1_stand_dev_mcmc_mean = format_read1.read(line)[0]
+
+line = best_overall_parameters.readline()
+best_q_2_mcmc_mean = format_read1.read(line)[0]
+line = best_overall_parameters.readline()
+q_2_stand_dev_mcmc_mean = format_read1.read(line)[0]
+
+line = best_overall_parameters.readline()
+best_K_amp_mcmc_mean = format_read1.read(line)[0]
+line = best_overall_parameters.readline()
+K_amp_stand_dev_mcmc_mean = format_read1.read(line)[0]
+
+line = best_overall_parameters.readline()
+best_Impact_mcmc_mean = format_read1.read(line)[0]
+line = best_overall_parameters.readline()
+Impact_stand_dev_mcmc_mean = format_read1.read(line)[0]
+
+line = best_overall_parameters.readline()
+best_Rorb_Rs_mcmc_mean = format_read1.read(line)[0]
+line = best_overall_parameters.readline()
+Rorb_Rs_stand_dev_mcmc_mean = format_read1.read(line)[0]
+
+format_read3 = ff.FortranRecordReader('(92X, I10)')
+line = best_overall_parameters.readline()
+Number_fit = format_read3.read(line)[0]
+line = best_overall_parameters.readline()
+Number_RV_points = format_read3.read(line)[0]
+
 best_overall_parameters.close()
 
 
@@ -1303,6 +1551,24 @@ vsini_mean_walkers = format_read_walkers.read(line)
 line = best_walker_parameters.readline()
 spin_orbit_mean_walkers = format_read_walkers.read(line)
 
+line = best_walker_parameters.readline()
+vmacro_mean_walkers = format_read_walkers.read(line)
+
+line = best_walker_parameters.readline()
+q_1_mean_walkers = format_read_walkers.read(line)
+
+line = best_walker_parameters.readline()
+q_2_mean_walkers = format_read_walkers.read(line)
+
+line = best_walker_parameters.readline()
+K_amp_mean_walkers = format_read_walkers.read(line)
+
+line = best_walker_parameters.readline()
+Impact_mean_walkers = format_read_walkers.read(line)
+
+line = best_walker_parameters.readline()
+Rorb_Rs_mean_walkers = format_read_walkers.read(line)
+
 best_walker_parameters.close()
 
 
@@ -1353,6 +1619,24 @@ vsini_stand_dev_walkers = format_read_walkers.read(line)
 line = stand_dev_walker_parameters.readline()
 spin_orbit_stand_dev_walkers = format_read_walkers.read(line)
 
+line = stand_dev_walker_parameters.readline()
+vmacro_stand_dev_walkers = format_read_walkers.read(line)
+
+line = stand_dev_walker_parameters.readline()
+q_1_stand_dev_walkers = format_read_walkers.read(line)
+
+line = stand_dev_walker_parameters.readline()
+q_2_stand_dev_walkers = format_read_walkers.read(line)
+
+line = stand_dev_walker_parameters.readline()
+K_amp_stand_dev_walkers = format_read_walkers.read(line)
+
+line = stand_dev_walker_parameters.readline()
+Impact_stand_dev_walkers = format_read_walkers.read(line)
+
+line = stand_dev_walker_parameters.readline()
+Rorb_Rs_stand_dev_walkers = format_read_walkers.read(line)
+
 stand_dev_walker_parameters.close()
 
 
@@ -1365,23 +1649,26 @@ vsini_median_all_walkers = np.median(vsini_mcmc_nomask_array)
 
 
 
+test_null_hypothesis = False
 #Create a model RV, RM, and transit array with the best fit parameters.
 Transit_LC_array, RM_effect_array, RV_array, Timestep, Time_transit_actual, Time_occultation_actual, \
 Time_transit_90inc, min_LC_value, amp_RM_effect, max_frac_flux_decrease, RV_full_amp, max_flux_planet, \
 Transit_start_no_inc, Time_mid_transit, Transit_end_no_inc, Time_occultation_start, Time_occultation_end = \
     RV_model_array(data_plot_model_interval, Number_orbits, Bessel_function_exit, Jupiter_units, use_Rp_Rs_ratio,
                    best_vsini_mcmc_mean, best_spin_orbit_mcmc_mean, Orbital_period_prior, JD_time_mid_transit_prior,
-                   Mp_prior, Rp_prior, Ms_solar_prior, Rs_solar_prior, Rp_Rs_ratio_prior, Ecc_prior, Inc_prior,
-                   omega_arg_periastron_prior, beta_rot, vmacro, linear_quadratic, q_1, q_2, u_linear, Albedo, M_pixels)
+                   Mp_prior, Mp_fixed, Rp_prior, Ms_solar_prior, Rs_solar_prior, Rp_Rs_ratio_prior, Ecc_prior, Inc_prior,
+                   omega_arg_periastron_prior, beta_rot, vmacro_prior, linear_quadratic, q_1_prior, q_2_prior, u_linear,
+                   K_amp_prior, use_K_amp, Impact_prior, use_Impact, Rorb_Rs_prior, use_Rorb_Rs_ratio,
+                   test_null_hypothesis, Albedo, M_pixels)
 
 
 
 
 #-------------------------------------Compile and run RV residuals Fortran program-------------------------------------#
-cmd1 = "gfortran -c -ffree-line-length-none -std=f2008 -O3 RM_effect_residuals.f08"
+cmd1 = "gfortran -c -ffree-line-length-none -std=f2008 -O3 RM_effect_residuals_V03.f08"
 process1 = subprocess.call(cmd1, shell=True, stdout=subprocess.PIPE)
 
-cmd2 = "gfortran RM_effect_residuals.o"
+cmd2 = "gfortran RM_effect_residuals_V03.o"
 process2 = subprocess.call(cmd2, shell=True, stdout=subprocess.PIPE)
 
 cmd3 = "./a.out"
@@ -1434,6 +1721,108 @@ residuals_all_array['Time'] = residual_all_data[:,0]
 residuals_all_array['RV'] = residual_all_data[:,1]
 residuals_all_array['RV_error'] = residual_all_data[:,2]
 
+chi_squared_fit_input = input_temp_data + 'chi_squared_value.txt'
+#Read in the chi squared and model fit parameters from residuals.
+chi_squared_fit = open(chi_squared_fit_input, 'r')
+format_read = ff.FortranRecordReader('(92X, F15.6)')
+line = chi_squared_fit.readline()
+model_data_difference_residuals = format_read.read(line)[0]
+line = chi_squared_fit.readline()
+chi_2_residuals = format_read.read(line)[0]
+line = chi_squared_fit.readline()
+r_Chi_2_residuals = format_read.read(line)[0]
+line = chi_squared_fit.readline()
+likelihood_residuals = format_read.read(line)[0]
+chi_squared_fit.close()
+
+#BIC_residuals = chi_2_residuals + (Number_fit)*math.log(Number_RV_points)
+BIC_residuals = chi_2_residuals + 3.0*math.log(Number_RV_points)
+
+
+
+
+#---------------------------Test the null hypothesis and determine residuals--------------------------------------------
+if test_null == 'Y':
+    test_null_hypothesis = True
+    # Create a model RV, RM, and transit array with the best fit parameters.
+    Transit_LC_array_null, RM_effect_array_null, RV_array_null, Timestep_null, Time_transit_actual_null, \
+    Time_occultation_actual_null, Time_transit_90inc_null, min_LC_value_null, amp_RM_effect_null, \
+    max_frac_flux_decrease_null, RV_full_amp_null, max_flux_planet_null, Transit_start_no_inc_null, \
+    Time_mid_transit_null, Transit_end_no_inc_null, Time_occultation_start_null, Time_occultation_end_null = \
+        RV_model_array(data_plot_model_interval, Number_orbits, Bessel_function_exit, Jupiter_units, use_Rp_Rs_ratio,
+                       best_vsini_mcmc_mean, best_spin_orbit_mcmc_mean, Orbital_period_prior, JD_time_mid_transit_prior,
+                       Mp_prior, Mp_fixed, Rp_prior, Ms_solar_prior, Rs_solar_prior, Rp_Rs_ratio_prior, Ecc_prior,
+                       Inc_prior, omega_arg_periastron_prior, beta_rot, vmacro_prior, linear_quadratic, q_1_prior,
+                       q_2_prior, u_linear, K_amp_prior, use_K_amp, Impact_prior, use_Impact, Rorb_Rs_prior,
+                       use_Rorb_Rs_ratio, test_null_hypothesis, Albedo, M_pixels)
+
+    # Set test_null_hypothesis to false first.
+    test_null_hypothesis_text = 'T'
+    test_null_file_output = open(output_temp_data + 'test_null.txt', 'w')
+    test_null_file_output.write('{:1}\n'.format(test_null_hypothesis_text))
+    test_null_file_output.close()
+
+    #-------------------------------------Compile and run RV residuals Fortran program---------------------------------#
+    cmd1 = "gfortran -c -ffree-line-length-none -std=f2008 -O3 RM_effect_residuals_V03.f08"
+    process1 = subprocess.call(cmd1, shell=True, stdout=subprocess.PIPE)
+
+    cmd2 = "gfortran RM_effect_residuals_V03.o"
+    process2 = subprocess.call(cmd2, shell=True, stdout=subprocess.PIPE)
+
+    cmd3 = "./a.out"
+    process3 = subprocess.Popen(cmd3, shell=True, stderr=subprocess.PIPE)
+
+    while True:
+        out = process3.stderr.read(1)
+        if out == b'' and process3.poll() != None:
+            break
+        #endif
+        if out != b'':
+            sys.stdout.write(out.decode(sys.stdout.encoding))
+            sys.stdout.flush()
+        #endif
+    #EndWhileTrue
+
+    process3.wait()
+
+    #------------------------------------------Read in the RV residual arrays------------------------------------------#
+
+    # Read in residual array and differentiate which ones are from my RV's and which ones are from other RV's.
+    residual_data_null = np.genfromtxt(residual_array_input, dtype='float')
+    length_residual_data_null = len(residual_data_null)
+    index_residual_null = np.arange(length_residual_data_null)
+    residual_array_null = pd.DataFrame(index=index_residual_null, columns=columns_for_residual_arrays, dtype='float')
+    residual_array_null['Time'] = residual_data_null[:, 0]
+    residual_array_null['RV'] = residual_data_null[:, 1]
+    residual_array_null['RV_error'] = residual_data_null[:, 2]
+
+    residual_all_data_null = np.genfromtxt(residual_all_array_input, dtype='float')
+    length_residual_all_data_null = len(residual_all_data_null)
+    index_residual_all_null = np.arange(length_residual_all_data_null)
+    residuals_all_array_null = pd.DataFrame(index=index_residual_all_null, columns=columns_for_residual_arrays,
+                                            dtype='float')
+    residuals_all_array_null['Time'] = residual_all_data_null[:, 0]
+    residuals_all_array_null['RV'] = residual_all_data_null[:, 1]
+    residuals_all_array_null['RV_error'] = residual_all_data_null[:, 2]
+
+    chi_squared_fit_input = input_temp_data + 'chi_squared_value.txt'
+    #Read in the chi squared and model fit parameters from residuals.
+    chi_squared_fit = open(chi_squared_fit_input, 'r')
+    format_read = ff.FortranRecordReader('(92X, F15.6)')
+    line = chi_squared_fit.readline()
+    model_data_difference_null = format_read.read(line)[0]
+    line = chi_squared_fit.readline()
+    chi_2_null = format_read.read(line)[0]
+    line = chi_squared_fit.readline()
+    r_Chi_2_null = format_read.read(line)[0]
+    line = chi_squared_fit.readline()
+    likelihood_null = format_read.read(line)[0]
+    chi_squared_fit.close()
+
+    #BIC_null = chi_2_null + (Number_fit - 1.0)*math.log(Number_RV_points)
+    BIC_null = chi_2_null + 1.0 * math.log(Number_RV_points)
+    BIC_difference = BIC_null - BIC_residuals
+
 
 
 
@@ -1476,19 +1865,34 @@ for t in range(total_data_points):
         residuals_all_array.loc[t, "Time"] = (RV_array.loc[total_interval - 1, 'Time']/(24.0*3600.0)) - \
                                               abs(residuals_all_array.loc[t, 'Time'] -
                                                   RV_array.loc[0, 'Time']/(24.0*3600.0))
+        if test_null == 'Y':
+            residuals_all_array_null.loc[t, "Time"] = (RV_array.loc[total_interval - 1, 'Time'] / (24.0 * 3600.0)) - \
+                                                 abs(residuals_all_array_null.loc[t, 'Time'] -
+                                                     RV_array.loc[0, 'Time'] / (24.0 * 3600.0))
+
     else:
         residuals_all_array.loc[t, 'Time'] = residuals_all_array.loc[t, 'Time']
+        if test_null == 'Y':
+            residuals_all_array_null.loc[t, 'Time'] = residuals_all_array_null.loc[t, 'Time']
     #endelse
 #endfor
 
 residuals_all_array = residuals_all_array.sort_values('Time', ascending=True)
 residuals_all_array = residuals_all_array.reset_index(drop=True)
 
+if test_null == 'Y':
+    residuals_all_array_null = residuals_all_array_null.sort_values('Time', ascending=True)
+    residuals_all_array_null = residuals_all_array_null.reset_index(drop=True)
+#endif
+
 
 
 
 index_my_RV_residuals = np.arange(my_datafilelength)
 my_RV_residuals_array = pd.DataFrame(index=index_my_RV_residuals, columns=columns_for_residual_arrays, dtype='float')
+if test_null == 'Y':
+    my_RV_residuals_null_array = pd.DataFrame(index=index_my_RV_residuals, columns=columns_for_residual_arrays,
+                                         dtype='float')
 residual_symbol_mydata = pd.DataFrame(index=index_my_RV_residuals, columns=["Symbols"], dtype='float')
 
 my_rv_num_insert = 0
@@ -1499,6 +1903,11 @@ for i in range(total_data_points):
             my_RV_residuals_array.loc[my_rv_num_insert, 'Time'] = residuals_all_array.loc[i, 'Time']
             my_RV_residuals_array.loc[my_rv_num_insert, 'RV'] = residuals_all_array.loc[i, 'RV']
             my_RV_residuals_array.loc[my_rv_num_insert, 'RV_error'] = residuals_all_array.loc[i, 'RV_error']
+
+            if test_null == 'Y':
+                my_RV_residuals_null_array.loc[my_rv_num_insert, 'Time'] = residuals_all_array_null.loc[i, 'Time']
+                my_RV_residuals_null_array.loc[my_rv_num_insert, 'RV'] = residuals_all_array_null.loc[i, 'RV']
+                my_RV_residuals_null_array.loc[my_rv_num_insert, 'RV_error'] = residuals_all_array_null.loc[i, 'RV_error']
 
             residual_symbol_mydata.loc[my_rv_num_insert, 'Symbols'] = my_data_plotting_symbols_array.loc[j, 'Symbols']
 
@@ -1517,16 +1926,27 @@ if other_RV_files == 'Y':
     index_other_RV_residuals = np.arange(datafilelength_other1)
     other_RV_residuals_array = pd.DataFrame(index=index_other_RV_residuals, columns=columns_for_residual_arrays,
                                          dtype='float')
+    if test_null == 'Y':
+        other_RV_residuals_null_array = pd.DataFrame(index=index_other_RV_residuals, columns=columns_for_residual_arrays,
+                                                dtype='float')
+
     residual_symbol_otherdata = pd.DataFrame(index=index_other_RV_residuals, columns=["Symbols"], dtype='float')
 
     #Now differentiate the residuals as either from my data or from other dataset.
     for i in range(total_data_points):
         for j in range(datafilelength_other1):
 
-            if abs(template_other1.loc[j, 'Time'] - residuals_all_array.loc[i, 'Time']) <= 0.002:
+            if abs(template_other1.loc[j, 'Time'] - residuals_all_array.loc[i, 'Time']) <= 0.0001:
                 other_RV_residuals_array.loc[other_rv_num_insert, 'Time'] = residuals_all_array.loc[i, 'Time']
                 other_RV_residuals_array.loc[other_rv_num_insert, 'RV'] = residuals_all_array.loc[i, 'RV']
                 other_RV_residuals_array.loc[other_rv_num_insert, 'RV_error'] = residuals_all_array.loc[i, 'RV_error']
+
+                if test_null == 'Y':
+                    other_RV_residuals_null_array.loc[other_rv_num_insert, 'Time'] = residuals_all_array_null.loc[i,
+                                                                                                                'Time']
+                    other_RV_residuals_null_array.loc[other_rv_num_insert, 'RV'] = residuals_all_array_null.loc[i, 'RV']
+                    other_RV_residuals_null_array.loc[other_rv_num_insert, 'RV_error'] = residuals_all_array_null.loc[
+                        i, 'RV_error']
 
                 residual_symbol_otherdata.loc[other_rv_num_insert, 'Symbols'] = other_data_plotting_symbols_array.loc[
                     j, 'Symbols']
@@ -1696,6 +2116,11 @@ RVcurve_op_all_data_orbit_out = save_data_directory + 'RVcurve_op_all_data_orbit
 RVcurve_op_my_data_transit_out = save_data_directory + 'RVcurve_op_my_data_transit_' + Planet_name + '.pdf'
 RVcurve_op_my_data_orbit_out = save_data_directory + 'RVcurve_op_my_data_orbit_' + Planet_name + '.pdf'
 
+# RVcurve_op_all_data_transit_null_out = save_data_directory + 'RVcurve_op_all_data_transit_null_' + Planet_name + '.pdf'
+# RVcurve_op_all_data_orbit_null_out = save_data_directory + 'RVcurve_op_all_data_orbit_null_' + Planet_name + '.pdf'
+# RVcurve_op_my_data_transit_null_out = save_data_directory + 'RVcurve_op_my_data_transit_null_' + Planet_name + '.pdf'
+# RVcurve_op_my_data_orbit_null_out = save_data_directory + 'RVcurve_op_my_data_orbit_null_' + Planet_name + '.pdf'
+
 fig = plt.figure()
 plt.rc('text', usetex=True)
 plt.rc('font', family='Times')
@@ -1832,22 +2257,42 @@ if other_RV_files == 'Y':
 
     position_range_myresid = my_RV_residuals_array.where((my_RV_residuals_array["Time"] * (24.0 * 60.0) >= lower_xlim) &
                                               (my_RV_residuals_array["Time"] * (24.0 * 60.0) <= upper_xlim))
+    if test_null == 'Y':
+        position_range_myresid_null = my_RV_residuals_null_array.where(
+            (my_RV_residuals_null_array["Time"] * (24.0 * 60.0) >= lower_xlim) &
+            (my_RV_residuals_null_array["Time"] * (24.0 * 60.0) <= upper_xlim))
     start_index_myresid = position_range_myresid["Time"].first_valid_index()
     end_index_myresid = position_range_myresid["Time"].last_valid_index()
 
     position_range_otherresid = other_RV_residuals_array.where((other_RV_residuals_array["Time"] * (24.0 * 60.0) >=
                                                                 lower_xlim) &
                                                     (other_RV_residuals_array["Time"] * (24.0 * 60.0) <= upper_xlim))
+    if test_null == 'Y':
+        position_range_otherresid_null = other_RV_residuals_null_array.where((other_RV_residuals_null_array["Time"] *
+                                                                              (24.0 * 60.0) >=
+                                                                    lower_xlim) &
+                                                                   (other_RV_residuals_null_array["Time"] * (
+                                                                   24.0 * 60.0) <= upper_xlim))
     start_index_otherresid = position_range_otherresid["Time"].first_valid_index()
     end_index_otherresid = position_range_otherresid["Time"].last_valid_index()
 
     ymax_value1 = np.max(position_range_myresid["RV"] + position_range_myresid["RV_error"] + 1.0)
     ymax_value2 = np.max(position_range_otherresid["RV"] + position_range_otherresid["RV_error"] + 1.0)
+    if test_null == 'Y':
+        ymax_value3 = np.max(position_range_myresid_null["RV"] + position_range_myresid_null["RV_error"] + 1.0)
+        ymax_value4 = np.max(position_range_otherresid_null["RV"] + position_range_otherresid_null["RV_error"] + 1.0)
     ymax_value_resid = max(ymax_value1, ymax_value2)
+    if test_null == 'Y':
+        ymax_value_resid = max(ymax_value1, ymax_value2, ymax_value3, ymax_value4)
 
     ymin_value1 = np.min(position_range_myresid["RV"] - position_range_myresid["RV_error"] - 1.0)
     ymin_value2 = np.min(position_range_otherresid["RV"] - position_range_otherresid["RV_error"] - 1.0)
+    if test_null == 'Y':
+        ymin_value3 = np.min(position_range_myresid_null["RV"] - position_range_myresid_null["RV_error"] - 1.0)
+        ymin_value4 = np.min(position_range_otherresid_null["RV"] - position_range_otherresid_null["RV_error"] - 1.0)
     ymin_value_resid = min(ymin_value1, ymin_value2)
+    if test_null == 'Y':
+        ymin_value_resid = min(ymin_value1, ymin_value2, ymin_value3, ymin_value4)
 
     fig = plt.figure()
     gs = gridspec.GridSpec(100, 100)
@@ -1862,17 +2307,26 @@ if other_RV_files == 'Y':
     for i in range(num_my_rv):
         ax1.errorbar(RV_my_array.loc[i, "Time"]*(24.0*60.0), RV_my_array.loc[i, "RV"],
                      yerr=RV_my_array.loc[i, "RV_error"], fmt=my_data_plotting_symbols_array.loc[i, 'Symbols'],
-                     ecolor='r', color='k', mfc='k', elinewidth=2, markersize=6, capsize=7, markeredgewidth=1.0,
-                     fillstyle='full', alpha=0.7, markeredgecolor='k', zorder=2)
+                     ecolor='k', color='k', mfc='k', elinewidth=1.5, markersize=5, capsize=0, markeredgewidth=1.0,
+                     fillstyle='full', alpha=0.9, markeredgecolor='k', zorder=2)
     # endfor
     for i in range(num_rv1):
         ax1.errorbar(RV_other_array.loc[i, "Time"]*(24.0*60.0), RV_other_array.loc[i, "RV"],
                      yerr=RV_other_array.loc[i, "RV_error"], fmt=other_data_plotting_symbols_array.loc[i, 'Symbols'],
-                     ecolor='b', color='k', mfc='k', elinewidth=2, markersize=6, capsize=7, markeredgewidth=1.0,
-                     fillstyle='full', alpha=0.7, markeredgecolor='k', zorder=1)
+                     ecolor='b', color='k', mfc='k', elinewidth=1.5, markersize=5, capsize=0, markeredgewidth=1.0,
+                     fillstyle='full', alpha=0.9, markeredgecolor='k', zorder=1)
     # endfor
-    ax1.plot(RV_array["Time"] / 60.0, RV_array["RV"], linestyle='solid', linewidth=1.5, color="g", zorder=3)
-    plt.tick_params(axis='both', which='major', labelsize=14, direction='in', top="on", right="on")
+    if test_null == 'Y':
+        ax1.plot(RV_array_null["Time"] / 60.0, RV_array_null["RV"], linestyle='-.', linewidth=1.25, color="b",
+                 zorder=3, alpha=0.6)
+    ax1.plot(RV_array["Time"] / 60.0, RV_array["RV"], linestyle='dashed', linewidth=1.25, color="r", zorder=3)
+    ax1.tick_params(axis='both', which='both', labelsize=14, direction='in', top="on", right="on")
+    ax1.tick_params(which='minor', length=3, color='k', direction='in', top="on", right="on")
+    ax1.tick_params(which='major', length=6, color='k', direction='in', top="on", right="on", width=1.3)
+    ax1.xaxis.set_minor_locator(AutoMinorLocator(5))
+    ax1.yaxis.set_minor_locator(AutoMinorLocator(5))
+    ax1.yaxis.set_major_locator(plt.MaxNLocator('auto'))
+    ax1.xaxis.set_major_locator(plt.MaxNLocator('auto'))
 
     ax2 = plt.subplot(gs[65:100, 1:100])
     plt.xlim(lower_xlim, upper_xlim)
@@ -1881,20 +2335,39 @@ if other_RV_files == 'Y':
     for i in range(num_my_rv):
         ax2.errorbar(my_RV_residuals_array.loc[i, "Time"] * (24.0 * 60.0), my_RV_residuals_array.loc[i, "RV"],
                      yerr=my_RV_residuals_array.loc[i, "RV_error"],
-                     fmt=my_data_plotting_symbols_array.loc[i, 'Symbols'], ecolor='r', mfc='k', color='k', elinewidth=2,
-                     markersize=6, capsize=7, markeredgewidth=1.0, fillstyle='full', alpha=0.7, markeredgecolor='k',
-                     zorder=2)
+                     fmt=my_data_plotting_symbols_array.loc[i, 'Symbols'], ecolor='k', mfc='k', color='k',
+                     elinewidth=1.5, markersize=5, capsize=0, markeredgewidth=1.0, fillstyle='full', alpha=0.9,
+                     markeredgecolor='k', zorder=2)
+        if test_null == 'Y':
+            ax2.errorbar(my_RV_residuals_null_array.loc[i, "Time"] * (24.0 * 60.0),
+                         my_RV_residuals_null_array.loc[i, "RV"], yerr=my_RV_residuals_null_array.loc[i, "RV_error"],
+                         fmt=my_data_plotting_symbols_array.loc[i, 'Symbols'], ecolor='k', mfc='k', color='k',
+                         elinewidth=1.5, markersize=5, capsize=0, markeredgewidth=1.0, fillstyle='full', alpha=0.5,
+                         markeredgecolor='k', zorder=2)
     # endfor
     for i in range(num_rv1):
         ax2.errorbar(other_RV_residuals_array.loc[i, "Time"] * (24.0 * 60.0), other_RV_residuals_array.loc[i, "RV"],
                      yerr=other_RV_residuals_array.loc[i, "RV_error"],
                      fmt=other_data_plotting_symbols_array.loc[i, 'Symbols'], ecolor='b', color='k', mfc='k',
-                     elinewidth=2, markersize=6, capsize=7, markeredgewidth=1.0, fillstyle='full', alpha=0.7,
+                     elinewidth=1.5, markersize=5, capsize=0, markeredgewidth=1.0, fillstyle='full', alpha=0.9,
                      markeredgecolor='k', zorder=1)
+        if test_null == 'Y':
+            ax2.errorbar(other_RV_residuals_null_array.loc[i, "Time"] * (24.0 * 60.0),
+                         other_RV_residuals_null_array.loc[i, "RV"],
+                         yerr=other_RV_residuals_null_array.loc[i, "RV_error"],
+                         fmt=other_data_plotting_symbols_array.loc[i, 'Symbols'], ecolor='b', color='k', mfc='k',
+                         elinewidth=1.5, markersize=5, capsize=0, markeredgewidth=1.0, fillstyle='full', alpha=0.5,
+                         markeredgecolor='k', zorder=1)
     # endfor
-    ax2.axhline(y=0, linestyle='solid', linewidth=1.5, color="g", zorder=3)
+    ax2.axhline(y=0, linestyle='dashed', linewidth=1.25, color="r", zorder=3)
     plt.xlabel('Time (Minutes From Mid Transit)', fontsize=14)
-    plt.tick_params(axis='both', which='major', labelsize=14, direction='in', top="on", right="on")
+    ax2.tick_params(axis='both', which='both', labelsize=14, direction='in', top="on", right="on")
+    ax2.tick_params(which='minor', length=3, color='k', direction='in', top="on", right="on")
+    ax2.tick_params(which='major', length=6, color='k', direction='in', top="on", right="on", width=1.3)
+    ax2.xaxis.set_minor_locator(AutoMinorLocator(5))
+    ax2.yaxis.set_minor_locator(AutoMinorLocator(5))
+    ax2.yaxis.set_major_locator(plt.MaxNLocator('auto'))
+    ax2.xaxis.set_major_locator(plt.MaxNLocator('auto'))
 
     plt.savefig(RVcurve_op_all_data_transit_out, dpi=150)
     plt.close(fig)
@@ -1912,11 +2385,21 @@ if other_RV_files == 'Y':
 
     ymax_value1 = np.max(my_RV_residuals_array["RV"] + my_RV_residuals_array["RV_error"] + 10.0)
     ymax_value2 = np.max(other_RV_residuals_array["RV"] + other_RV_residuals_array["RV_error"] + 10.0)
+    if test_null == 'Y':
+        ymax_value3 = np.max(my_RV_residuals_null_array["RV"] + my_RV_residuals_null_array["RV_error"] + 10.0)
+        ymax_value4 = np.max(other_RV_residuals_null_array["RV"] + other_RV_residuals_null_array["RV_error"] + 10.0)
     ymax_value_resid = max(ymax_value1, ymax_value2)
+    if test_null == 'Y':
+        ymax_value_resid = max(ymax_value1, ymax_value2, ymax_value3, ymax_value4)
 
     ymin_value1 = np.min(my_RV_residuals_array["RV"] - my_RV_residuals_array["RV_error"] - 10.0)
     ymin_value2 = np.min(other_RV_residuals_array["RV"] - other_RV_residuals_array["RV_error"] - 10.0)
+    if test_null == 'Y':
+        ymin_value3 = np.min(my_RV_residuals_null_array["RV"] - my_RV_residuals_null_array["RV_error"] - 10.0)
+        ymin_value4 = np.min(other_RV_residuals_null_array["RV"] - other_RV_residuals_null_array["RV_error"] - 10.0)
     ymin_value_resid = min(ymin_value1, ymin_value2)
+    if test_null == 'Y':
+        ymin_value_resid = min(ymin_value1, ymin_value2, ymin_value3, ymin_value4)
 
     lower_xlim = RV_array.loc[0, "Time"]/60.0
     upper_xlim = RV_array.loc[total_interval - 1, 'Time']/60.0
@@ -1934,17 +2417,26 @@ if other_RV_files == 'Y':
     for i in range(num_my_rv):
         ax1.errorbar(RV_my_array.loc[i, "Time"] * (24.0 * 60.0), RV_my_array.loc[i, "RV"],
                      yerr=RV_my_array.loc[i, "RV_error"], fmt=my_data_plotting_symbols_array.loc[i, 'Symbols'],
-                     ecolor='r', color='k', mfc='k', elinewidth=2, markersize=6, capsize=7, markeredgewidth=1.0,
-                     fillstyle='full', alpha=0.6, markeredgecolor='k', zorder=2)
+                     ecolor='k', color='k', mfc='k', elinewidth=1.5, markersize=5, capsize=0, markeredgewidth=1.0,
+                     fillstyle='full', alpha=0.9, markeredgecolor='k', zorder=2)
     # endfor
     for i in range(num_rv1):
         ax1.errorbar(RV_other_array.loc[i, "Time"] * (24.0 * 60.0), RV_other_array.loc[i, "RV"],
                      yerr=RV_other_array.loc[i, "RV_error"], fmt=other_data_plotting_symbols_array.loc[i, 'Symbols'],
-                     ecolor='b', color='k', mfc='k', elinewidth=2, markersize=6, capsize=7, markeredgewidth=1.0,
-                     fillstyle='full', alpha=0.6, markeredgecolor='k', zorder=1)
+                     ecolor='b', color='k', mfc='k', elinewidth=1.5, markersize=5, capsize=0, markeredgewidth=1.0,
+                     fillstyle='full', alpha=0.9, markeredgecolor='k', zorder=1)
     # endfor
-    ax1.plot(RV_array["Time"] / 60.0, RV_array["RV"], linestyle='solid', linewidth=2, color="g", zorder=3)
-    plt.tick_params(axis='both', which='major', labelsize=14, direction='in', top="on", right="on")
+    if test_null == 'Y':
+        ax1.plot(RV_array_null["Time"] / 60.0, RV_array_null["RV"], linestyle='-.', linewidth=1.25, color="b",
+                 zorder=3, alpha=0.6)
+    ax1.plot(RV_array["Time"] / 60.0, RV_array["RV"], linestyle='dashed', linewidth=1.25, color="r", zorder=3)
+    ax1.tick_params(axis='both', which='both', labelsize=14, direction='in', top="on", right="on")
+    ax1.tick_params(which='minor', length=3, color='k', direction='in', top="on", right="on")
+    ax1.tick_params(which='major', length=6, color='k', direction='in', top="on", right="on", width=1.3)
+    ax1.xaxis.set_minor_locator(AutoMinorLocator(5))
+    ax1.yaxis.set_minor_locator(AutoMinorLocator(5))
+    ax1.yaxis.set_major_locator(plt.MaxNLocator('auto'))
+    ax1.xaxis.set_major_locator(plt.MaxNLocator('auto'))
 
     ax2 = plt.subplot(gs[65:100, 3:100])
     plt.xlim(lower_xlim, upper_xlim)
@@ -1953,20 +2445,39 @@ if other_RV_files == 'Y':
     for i in range(num_my_rv):
         ax2.errorbar(my_RV_residuals_array.loc[i, "Time"] * (24.0 * 60.0), my_RV_residuals_array.loc[i, "RV"],
                      yerr=my_RV_residuals_array.loc[i, "RV_error"],
-                     fmt=my_data_plotting_symbols_array.loc[i, 'Symbols'], ecolor='r', color='k', mfc='k', elinewidth=2,
-                     markersize=6, capsize=7, markeredgewidth=1.0, fillstyle='full', alpha=0.6, markeredgecolor='k',
-                     zorder=2)
+                     fmt=my_data_plotting_symbols_array.loc[i, 'Symbols'], ecolor='k', color='k', mfc='k',
+                     elinewidth=1.5, markersize=5, capsize=0, markeredgewidth=1.0, fillstyle='full', alpha=0.9,
+                     markeredgecolor='k', zorder=2)
+        if test_null == 'Y':
+            ax2.errorbar(my_RV_residuals_null_array.loc[i, "Time"] * (24.0 * 60.0),
+                         my_RV_residuals_null_array.loc[i, "RV"], yerr=my_RV_residuals_null_array.loc[i, "RV_error"],
+                         fmt=my_data_plotting_symbols_array.loc[i, 'Symbols'], ecolor='k', color='k', mfc='k',
+                         elinewidth=1.5, markersize=5, capsize=0, markeredgewidth=1.0, fillstyle='full', alpha=0.5,
+                         markeredgecolor='k', zorder=2)
     # endfor
     for i in range(num_rv1):
         ax2.errorbar(other_RV_residuals_array.loc[i, "Time"] * (24.0 * 60.0), other_RV_residuals_array.loc[i, "RV"],
                      yerr=other_RV_residuals_array.loc[i, "RV_error"],
                      fmt=other_data_plotting_symbols_array.loc[i, 'Symbols'], ecolor='b', color='k', mfc='k',
-                     elinewidth=2, markersize=6, capsize=7, markeredgewidth=1.0, fillstyle='full', alpha=0.6,
+                     elinewidth=1.5, markersize=5, capsize=0, markeredgewidth=1.0, fillstyle='full', alpha=0.9,
                      markeredgecolor='k', zorder=1)
+        if test_null == 'Y':
+            ax2.errorbar(other_RV_residuals_null_array.loc[i, "Time"] * (24.0 * 60.0),
+                         other_RV_residuals_null_array.loc[i, "RV"],
+                         yerr=other_RV_residuals_null_array.loc[i, "RV_error"],
+                         fmt=other_data_plotting_symbols_array.loc[i, 'Symbols'], ecolor='b', color='k', mfc='k',
+                         elinewidth=1.5, markersize=5, capsize=0, markeredgewidth=1.0, fillstyle='full', alpha=0.5,
+                         markeredgecolor='k', zorder=1)
     # endfor
-    ax2.axhline(y=0, linestyle='solid', linewidth=2, color="g", zorder=3)
+    ax2.axhline(y=0, linestyle='dashed', linewidth=1.25, color="r", zorder=3)
     plt.xlabel('Time (Minutes From Mid Transit)', fontsize=14)
-    plt.tick_params(axis='both', which='major', labelsize=14, direction='in', top="on", right="on")
+    ax2.tick_params(axis='both', which='both', labelsize=14, direction='in', top="on", right="on")
+    ax2.tick_params(which='minor', length=3, color='k', direction='in', top="on", right="on")
+    ax2.tick_params(which='major', length=6, color='k', direction='in', top="on", right="on", width=1.3)
+    ax2.xaxis.set_minor_locator(AutoMinorLocator(5))
+    ax2.yaxis.set_minor_locator(AutoMinorLocator(5))
+    ax2.yaxis.set_major_locator(plt.MaxNLocator('auto'))
+    ax2.xaxis.set_major_locator(plt.MaxNLocator('auto'))
 
     plt.savefig(RVcurve_op_all_data_orbit_out, dpi=150)
     plt.close(fig)
@@ -1990,13 +2501,26 @@ ymax_value_RV = np.max(position_range_mydata["RV"]+position_range_mydata["RV_err
 ymin_value_RV = np.min(position_range_mydata["RV"]-position_range_mydata["RV_error"]-1.0)
 
 position_range_myresid = my_RV_residuals_array.where((my_RV_residuals_array["Time"] * (24.0 * 60.0) >= lower_xlim) &
+
                                                      (my_RV_residuals_array["Time"] * (24.0 * 60.0) <= upper_xlim))
+
 start_index_myresid = position_range_myresid["Time"].first_valid_index()
 end_index_myresid = position_range_myresid["Time"].last_valid_index()
 
 ymax_value_resid = np.max(position_range_myresid["RV"] + position_range_myresid["RV_error"] + 1.0)
+if test_null == 'Y':
+    position_range_myresid_null = my_RV_residuals_null_array.where(
+        (my_RV_residuals_null_array["Time"] * (24.0 * 60.0) >= lower_xlim) &
+        (my_RV_residuals_null_array["Time"] * (24.0 * 60.0) <= upper_xlim))
+    ymax_value1 = np.max(position_range_myresid["RV"] + position_range_myresid["RV_error"] + 1.0)
+    ymax_value2 = np.max(position_range_myresid_null["RV"] + position_range_myresid_null["RV_error"] + 1.0)
+    ymax_value_resid = max(ymax_value1, ymax_value2)
 
 ymin_value_resid = np.min(position_range_myresid["RV"] - position_range_myresid["RV_error"] - 1.0)
+if test_null == 'Y':
+    ymin_value1 = np.min(position_range_myresid["RV"] - position_range_myresid["RV_error"] - 1.0)
+    ymin_value2 = np.min(position_range_myresid_null["RV"] - position_range_myresid_null["RV_error"] - 1.0)
+    ymin_value_resid = min(ymin_value1, ymin_value2)
 
 fig = plt.figure()
 gs = gridspec.GridSpec(100, 100)
@@ -2009,12 +2533,21 @@ plt.setp(plt.gca(), 'xticklabels', [])
 plt.ylabel(r'Radial Velocity (ms$^{-1}$)', fontsize=14)
 for i in range(num_my_rv):
     ax1.errorbar(RV_my_array.loc[i, "Time"]*(24.0*60.0), RV_my_array.loc[i, "RV"], yerr=RV_my_array.loc[i, "RV_error"],
-                 fmt=my_data_plotting_symbols_array.loc[i, 'Symbols'], ecolor='r', color='k', mfc='k', elinewidth=2,
-                 markersize=6, capsize=7, markeredgewidth=1.0, fillstyle='full', alpha=0.7, markeredgecolor='k',
+                 fmt=my_data_plotting_symbols_array.loc[i, 'Symbols'], ecolor='k', color='k', mfc='k', elinewidth=1.5,
+                 markersize=5, capsize=0, markeredgewidth=1.0, fillstyle='full', alpha=0.9, markeredgecolor='k',
                  zorder=1)
 #endfor
-ax1.plot(RV_array["Time"]/60.0, RV_array["RV"], linestyle='solid', linewidth=2, color="g", zorder=2)
-plt.tick_params(axis='both', which='major', labelsize=14, direction='in', top="on", right="on")
+if test_null == 'Y':
+    ax1.plot(RV_array_null["Time"] / 60.0, RV_array_null["RV"], linestyle='-.', linewidth=1.25, color="b",
+             zorder=3, alpha=0.6)
+ax1.plot(RV_array["Time"]/60.0, RV_array["RV"], linestyle='dashed', linewidth=1.25, color="r", zorder=2)
+ax1.tick_params(axis='both', which='both', labelsize=14, direction='in', top="on", right="on", length=6)
+ax1.tick_params(which='minor', length=3, color='k', direction='in', top="on", right="on")
+ax1.tick_params(which='major', length=6, color='k', direction='in', top="on", right="on", width=1.3)
+ax1.xaxis.set_minor_locator(AutoMinorLocator(5))
+ax1.yaxis.set_minor_locator(AutoMinorLocator(5))
+ax1.yaxis.set_major_locator(plt.MaxNLocator('auto'))
+ax1.xaxis.set_major_locator(plt.MaxNLocator('auto'))
 
 ax2 = plt.subplot(gs[65:100, 1:100])
 plt.xlim(lower_xlim, upper_xlim)
@@ -2022,14 +2555,27 @@ plt.ylim(ymin_value_resid, ymax_value_resid)
 for i in range(num_my_rv):
     ax2.errorbar(my_RV_residuals_array.loc[i, "Time"] * (24.0 * 60.0), my_RV_residuals_array.loc[i, "RV"],
                  yerr=my_RV_residuals_array.loc[i, "RV_error"],
-                 fmt=my_data_plotting_symbols_array.loc[i, 'Symbols'], ecolor='r', color='k', mfc='k', elinewidth=2,
-                 markersize=6, capsize=7, markeredgewidth=1.0, fillstyle='full', alpha=0.7, markeredgecolor='k',
+                 fmt=my_data_plotting_symbols_array.loc[i, 'Symbols'], ecolor='k', color='k', mfc='k', elinewidth=1.5,
+                 markersize=5, capsize=0, markeredgewidth=1.0, fillstyle='full', alpha=0.9, markeredgecolor='k',
                  zorder=1)
+
+    if test_null == 'Y':
+        ax2.errorbar(my_RV_residuals_null_array.loc[i, "Time"] * (24.0 * 60.0),
+                     my_RV_residuals_null_array.loc[i, "RV"], yerr=my_RV_residuals_null_array.loc[i, "RV_error"],
+                     fmt=my_data_plotting_symbols_array.loc[i, 'Symbols'], ecolor='k', color='k', mfc='k',
+                     elinewidth=1.5, markersize=5, capsize=0, markeredgewidth=1.0, fillstyle='full', alpha=0.5,
+                     markeredgecolor='k', zorder=2)
 #endfor
-ax2.axhline(y=0, linestyle='solid', linewidth=2, color="g", zorder=2)
+ax2.axhline(y=0, linestyle='dashed', linewidth=1.25, color="r", zorder=2)
 plt.xlabel('Time (Minutes From Mid Transit)', fontsize=14)
-plt.tick_params(axis='both', which='major', labelsize=14, direction='in', top="on", right="on")
+ax2.tick_params(axis='both', which='both', labelsize=14, direction='in', top="on", right="on", length=6)
+ax2.tick_params(which='minor', length=3, color='k', direction='in', top="on", right="on")
+ax2.tick_params(which='major', length=6, color='k', direction='in', top="on", right="on", width=1.3)
 plt.ylabel(r'O -- C (ms$^{-1}$)', fontsize=14)
+ax2.xaxis.set_minor_locator(AutoMinorLocator(5))
+ax2.yaxis.set_minor_locator(AutoMinorLocator(5))
+ax2.yaxis.set_major_locator(plt.MaxNLocator('auto'))
+ax2.xaxis.set_major_locator(plt.MaxNLocator('auto'))
 
 plt.savefig(RVcurve_op_my_data_transit_out, dpi=150)
 plt.close(fig)
@@ -2042,8 +2588,16 @@ ymax_value_RV = np.max(RV_my_array["RV"] + RV_my_array["RV_error"] + 1.0)
 ymin_value_RV = np.min(RV_my_array["RV"] - RV_my_array["RV_error"] - 1.0)
 
 ymax_value_resid = np.max(my_RV_residuals_array["RV"] + my_RV_residuals_array["RV_error"] + 1.0)
+if test_null == 'Y':
+    ymax_value1 = np.max(my_RV_residuals_array["RV"] + my_RV_residuals_array["RV_error"] + 1.0)
+    ymax_value2 = np.max(my_RV_residuals_null_array["RV"] + my_RV_residuals_null_array["RV_error"] + 10.0)
+    ymax_value_resid = max(ymax_value1, ymax_value2)
 
 ymin_value_resid = np.min(my_RV_residuals_array["RV"] - my_RV_residuals_array["RV_error"] - 1.0)
+if test_null == 'Y':
+    ymin_value1 = np.min(my_RV_residuals_array["RV"] - my_RV_residuals_array["RV_error"] - 1.0)
+    ymin_value2 = np.min(my_RV_residuals_null_array["RV"] - my_RV_residuals_null_array["RV_error"] - 10.0)
+    ymin_value_resid = min(ymin_value1, ymin_value2)
 
 lower_xlim = RV_array.loc[0, "Time"]/60.0
 upper_xlim = RV_array.loc[total_interval - 1, 'Time']/60.0
@@ -2060,12 +2614,21 @@ plt.ylabel(r'Radial Velocity (ms$^{-1}$)', fontsize=14)
 for i in range(num_my_rv):
     ax1.errorbar(RV_my_array.loc[i, "Time"] * (24.0 * 60.0), RV_my_array.loc[i, "RV"],
                  yerr=RV_my_array.loc[i, "RV_error"],
-                 fmt=my_data_plotting_symbols_array.loc[i, 'Symbols'], ecolor='r', color='k', mfc='k', elinewidth=2,
-                 markersize=6, capsize=7, markeredgewidth=1.0, fillstyle='full', alpha=0.7, markeredgecolor='k',
+                 fmt=my_data_plotting_symbols_array.loc[i, 'Symbols'], ecolor='k', color='k', mfc='k', elinewidth=1.5,
+                 markersize=5, capsize=0, markeredgewidth=1.0, fillstyle='full', alpha=0.9, markeredgecolor='k',
                  zorder=1)
 #endfor
-ax1.plot(RV_array["Time"] / 60.0, RV_array["RV"], linestyle='solid', linewidth=2, color="g", zorder=2)
-plt.tick_params(axis='both', which='major', labelsize=14, direction='in', top="on", right="on")
+if test_null == 'Y':
+    ax1.plot(RV_array_null["Time"] / 60.0, RV_array_null["RV"], linestyle='-.', linewidth=1.25, color="b",
+             zorder=3, alpha=0.6)
+ax1.plot(RV_array["Time"] / 60.0, RV_array["RV"], linestyle='dashed', linewidth=1.25, color="r", zorder=2)
+ax1.tick_params(axis='both', which='both', labelsize=14, direction='in', top="on", right="on", length=6)
+ax1.tick_params(which='minor', length=3, color='k', direction='in', top="on", right="on")
+ax1.tick_params(which='major', length=6, color='k', direction='in', top="on", right="on", width=1.3)
+ax1.xaxis.set_minor_locator(AutoMinorLocator(5))
+ax1.yaxis.set_minor_locator(AutoMinorLocator(5))
+ax1.yaxis.set_major_locator(plt.MaxNLocator('auto'))
+ax1.xaxis.set_major_locator(plt.MaxNLocator('auto'))
 
 ax2 = plt.subplot(gs[65:100, 1:100])
 plt.xlim(lower_xlim, upper_xlim)
@@ -2073,14 +2636,27 @@ plt.ylim(ymin_value_resid, ymax_value_resid)
 for i in range(num_my_rv):
     ax2.errorbar(my_RV_residuals_array.loc[i, "Time"] * (24.0 * 60.0), my_RV_residuals_array.loc[i, "RV"],
                  yerr=my_RV_residuals_array.loc[i, "RV_error"],
-                 fmt=my_data_plotting_symbols_array.loc[i, 'Symbols'], ecolor='r', color='k', mfc='k', elinewidth=2,
-                 markersize=6, capsize=7, markeredgewidth=1.0, fillstyle='full', alpha=0.7, markeredgecolor='k',
+                 fmt=my_data_plotting_symbols_array.loc[i, 'Symbols'], ecolor='k', color='k', mfc='k', elinewidth=1.5,
+                 markersize=5, capsize=5, markeredgewidth=1.0, fillstyle='full', alpha=0.9, markeredgecolor='k',
                  zorder=2)
+
+    if test_null == 'Y':
+        ax2.errorbar(my_RV_residuals_null_array.loc[i, "Time"] * (24.0 * 60.0),
+                     my_RV_residuals_null_array.loc[i, "RV"], yerr=my_RV_residuals_null_array.loc[i, "RV_error"],
+                     fmt=my_data_plotting_symbols_array.loc[i, 'Symbols'], ecolor='k', color='k', mfc='k',
+                     elinewidth=1.5, markersize=5, capsize=0, markeredgewidth=1.0, fillstyle='full', alpha=0.5,
+                     markeredgecolor='k', zorder=2)
 #endfor
-ax2.axhline(y=0, linestyle='solid', linewidth=2, color="g", zorder=2)
+ax2.axhline(y=0, linestyle='dashed', linewidth=1.25, color="r", zorder=2)
 plt.xlabel('Time (Minutes From Mid Transit)', fontsize=14)
-plt.tick_params(axis='both', which='major', labelsize=14, direction='in', top="on", right="on")
+ax2.tick_params(axis='both', which='both', labelsize=14, direction='in', top="on", right="on", length=6)
+ax2.tick_params(which='minor', length=3, color='k', direction='in', top="on", right="on")
+ax2.tick_params(which='major', length=6, color='k', direction='in', top="on", right="on", width=1.3)
 plt.ylabel(r'O -- C (ms$^{-1}$)', fontsize=14)
+ax2.xaxis.set_minor_locator(AutoMinorLocator(5))
+ax2.yaxis.set_minor_locator(AutoMinorLocator(5))
+ax2.yaxis.set_major_locator(plt.MaxNLocator('auto'))
+ax2.xaxis.set_major_locator(plt.MaxNLocator('auto'))
 
 plt.savefig(RVcurve_op_my_data_orbit_out, dpi=150)
 plt.close(fig)
@@ -2094,7 +2670,7 @@ posterior_out = save_data_directory + 'posterior_distro_' + Planet_name + '.pdf'
 fig = plt.figure()
 gs = gridspec.GridSpec(1000, 1000)
 plt.rc('text', usetex=True)
-plt.rc('font', family='Times')
+plt.rc('font', family='Times New Roman')
 ax1 = plt.subplot(gs[350:940, 5:650])
 
 # Remove the last ytick label
@@ -2105,7 +2681,7 @@ else:
 #endelse
 ax1.plot(spin_orbit_mcmc_nomask_array.loc[idx,'angle'], vsini_mcmc_nomask_array.loc[idx,'vsini']/1000.0, ".", color="k",
          alpha=0.20, zorder=1, markersize=2)
-fig.show()
+#fig.show()
 fig.canvas.draw()
 ax1.set_xticklabels(ax1.get_xticks())
 ax1.set_yticklabels(ax1.get_yticks())
@@ -2136,7 +2712,7 @@ num_bins_vsini = int(np.ceil((max(vsini_mcmc_nomask_array.loc[idx,'vsini']/1000.
 ax2 = plt.subplot(gs[0:349, 5:650])
 plt.setp(plt.gca(), 'xticklabels', [])
 n_lambda, bins_lambda, patches_lambda = ax2.hist(spin_orbit_mcmc_nomask_array.loc[idx,'angle'], bins=num_bins_lambda,
-                                                 normed=True, facecolor='k', alpha=0.75, cumulative=False,
+                                                 density=True, facecolor='k', alpha=0.75, cumulative=False,
                                                  stacked=False)
 
 # add a 'best fit' line
@@ -2150,7 +2726,7 @@ plt.tick_params(axis='both', which='major', labelsize=12, direction='in', top="o
 ax3 = plt.subplot(gs[350:940, 651:1000])
 plt.setp(plt.gca(), 'yticklabels', [])
 n_vsini, bins_vsini, patches_vsini = ax3.hist(vsini_mcmc_nomask_array.loc[idx,'vsini']/1000.0, bins=num_bins_vsini,
-                                              normed=True, facecolor='k', alpha=0.75, cumulative=False,
+                                              density=True, facecolor='k', alpha=0.75, cumulative=False,
                                               orientation='horizontal', stacked=False)
 
 # add a 'best fit' line
@@ -2158,7 +2734,7 @@ y_vsini = mlab.normpdf(bins_vsini, mu_vsini, sigma_vsini)
 l_vsini = ax3.plot(y_vsini, bins_vsini, 'r--', linewidth=2)
 
 #plot
-plt.tick_params(axis='both', which='major', labelsize=12, direction='in', top="on", right="on")
+plt.tick_params(axis='both', which='major', labelsize=12, direction='in', top=True, right=True)
 plt.setp(ax3.get_xticklabels(), rotation=45, horizontalalignment='right')
 plt.xlabel('Probability', fontsize=14)
 
@@ -2173,7 +2749,7 @@ vsini_mcmc_nomask_array_filt = gaussian_filter(vsini_mcmc_nomask_array.loc[idx,'
 
 H, xedges, yedges = np.histogram2d(spin_orbit_mcmc_nomask_array_filt,
                                    vsini_mcmc_nomask_array_filt, bins=(nbins_x,nbins_y),
-                                   normed=True)
+                                   density=True)
 
 #H, xedges, yedges = np.histogram2d(spin_orbit_mcmc_nomask_array.loc[idx,'angle'],
 #                                   vsini_mcmc_nomask_array.loc[idx,'vsini']/1000.0, bins=(nbins_x,nbins_y),
@@ -2195,7 +2771,6 @@ plt.close(fig)
 
 
 
-
 posterior_corr_out = save_data_directory + 'posterior_corr_' + Planet_name + '.pdf'
 
 #data = np.vstack([spin_orbit_mcmc_nomask_array.loc[idx,'angle'], vsini_mcmc_nomask_array.loc[idx,'vsini']/1000.0,
@@ -2212,15 +2787,27 @@ if Inc_fixed == 'N':
     labels = np.append(labels, labels1)
 #endif
 
+if Impact_fixed == 'N':
+    data = np.vstack([data, Impact_mcmc_nomask_array.loc[idx, 'value']])
+    labels1 = np.array([r"$b$"])
+    labels = np.append(labels, labels1)
+#endif
+
+if Rorb_Rs_fixed == 'N':
+    data = np.vstack([data, Rorb_Rs_mcmc_nomask_array.loc[idx, 'value']])
+    labels1 = np.array([r"$a/R_{\star}$"])
+    labels = np.append(labels, labels1)
+#endif
+
 if Rp_Rs_ratio_fixed == 'N':
     data = np.vstack([data, Rp_Rs_ratio_mcmc_nomask_array.loc[idx, 'ratio']])
-    labels1 = np.array([r"$R_{J}/R_{\odot}$"])
+    labels1 = np.array([r"$R_{p}/R_{\star}$"])
     labels = np.append(labels, labels1)
 #endif
 
 if Mp_fixed == 'N':
     data = np.vstack([data, Mp_mcmc_nomask_array.loc[idx, 'Mp']])
-    labels1 = np.array([r"$M_{J}$"])
+    labels1 = np.array([r"$M_{p}$ $(M_{J})$"])
     labels = np.append(labels, labels1)
 #endif
 
@@ -2245,6 +2832,24 @@ if Ecc_fixed == 'N':
 if arg_periastron_fixed == 'N':
     data = np.vstack([data, omega_arg_periastron_mcmc_nomask_array.loc[idx, 'angle']])
     labels1 = np.array([r"$\varpi$"])
+    labels = np.append(labels, labels1)
+#endif
+
+if K_amp_fixed == 'N':
+    data = np.vstack([data, K_amp_mcmc_nomask_array.loc[idx, 'RV']])
+    labels1 = np.array([r"$K$ km\,s$^{-1}$"])
+    labels = np.append(labels, labels1)
+#endif
+
+if RV_offset_datasets_fixed == 'N':
+    data = np.vstack([data, RV_offset_datasets_mcmc_nomask_array.loc[idx, 'RV']])
+    labels1 = np.array([r"$V_{d}$ m\,s$^{-1}$"])
+    labels = np.append(labels, labels1)
+#endif
+
+if RV_zero_offset_fixed == 'N':
+    data = np.vstack([data, RV_zero_offset_mcmc_nomask_array.loc[idx, 'RV']])
+    labels1 = np.array([r"$V_{0}$ m\,s$^{-1}$"])
     labels = np.append(labels, labels1)
 #endif
 
@@ -2289,6 +2894,21 @@ results_output.write('{:>80}'.format('Minimum Reduced Chi Squared Value: '))
 results_output.write('{:<20.2f}\n'.format(min_r_chi_squared_total))
 results_output.write('{:>80}'.format('Maximum Likelihood: '))
 results_output.write('{:<20.4f}\n'.format(max_likelihood_total))
+
+if test_null == 'Y':
+    results_output.write('{:>80}'.format('Chi Squared Value of Null Hypothesis: '))
+    results_output.write('{:<20.2f}\n'.format(chi_2_null))
+    results_output.write('{:>80}'.format('Reduced Chi Squared Value of Null Hypothesis: '))
+    results_output.write('{:<20.2f}\n'.format(r_Chi_2_null))
+    results_output.write('{:>80}'.format('Likelihood of Null Hypothesis: '))
+    results_output.write('{:<20.4f}\n'.format(likelihood_null))
+    results_output.write('{:>80}'.format('BIC of Residuals: '))
+    results_output.write('{:<20.4f}\n'.format(BIC_residuals))
+    results_output.write('{:>80}'.format('BIC of Residuals for Null Hypothesis: '))
+    results_output.write('{:<20.4f}\n'.format(BIC_null))
+    results_output.write('{:>80}'.format('Difference in BIC between RM and Null models: '))
+    results_output.write('{:<20.4f}\n'.format(BIC_difference))
+
 results_output.write('{:>80}'.format('Total Number of Accepted MCMC Iterations: '))
 results_output.write('{:<20d}\n'.format(int(np.sum(total_accepted_proposals_array)[0])))
 results_output.write('{:>80}'.format('Total MCMC Iterations: '))
@@ -2423,4 +3043,78 @@ results_output.write('{:>80}'.format('Best Argument Periastron From MCMC mean (d
 results_output.write('{:<20.1f}\n'.format(best_omega_arg_periastron_mcmc_mean + 180.0))
 results_output.write('{:>80}'.format('1 Sigma Uncertainty Argument Periastron From MCMC Variance (deg): '))
 results_output.write('{:<20.1f}\n'.format(omega_arg_periastron_stand_dev_mcmc_mean))
+results_output.write('\n')
+
+results_output.write('{:>80}'.format('Vmacro Prior (km/s): '))
+results_output.write('{:<20.2f}\n'.format(vmacro_prior))
+results_output.write('{:>80}'.format('Best Vmacro From MCMC mean (km/s): '))
+results_output.write('{:<20.2f}\n'.format(best_vmacro_mcmc_mean))
+results_output.write('{:>80}'.format('1 Sigma Uncertainty Vmacro From MCMC Variance (km/s): '))
+results_output.write('{:<20.2f}\n'.format(vmacro_stand_dev_mcmc_mean))
+results_output.write('\n')
+
+results_output.write('{:>80}'.format('Limb Darkening q_1 Prior: '))
+results_output.write('{:<20.4f}\n'.format(q_1_prior))
+results_output.write('{:>80}'.format('Best q_1 From MCMC mean: '))
+results_output.write('{:<20.4f}\n'.format(best_q_1_mcmc_mean))
+results_output.write('{:>80}'.format('1 Sigma Uncertainty q_1 From MCMC Variance: '))
+results_output.write('{:<20.4f}\n'.format(q_1_stand_dev_mcmc_mean))
+results_output.write('\n')
+
+results_output.write('{:>80}'.format('Limb Darkening q_2 Prior: '))
+results_output.write('{:<20.4f}\n'.format(q_2_prior))
+results_output.write('{:>80}'.format('Best q_2 From MCMC mean: '))
+results_output.write('{:<20.4f}\n'.format(best_q_2_mcmc_mean))
+results_output.write('{:>80}'.format('1 Sigma Uncertainty q_2 From MCMC Variance: '))
+results_output.write('{:<20.4f}\n'.format(q_2_stand_dev_mcmc_mean))
+results_output.write('\n')
+
+results_output.write('{:>80}'.format('Impact Prior: '))
+results_output.write('{:<20.4f}\n'.format(Impact_prior))
+results_output.write('{:>80}'.format('Best Impact From MCMC mean: '))
+results_output.write('{:<20.4f}\n'.format(best_Impact_mcmc_mean))
+results_output.write('{:>80}'.format('1 Sigma Uncertainty Impact From MCMC Variance: '))
+results_output.write('{:<20.4f}\n'.format(Impact_stand_dev_mcmc_mean))
+results_output.write('\n')
+
+results_output.write('{:>80}'.format('Rorb over Rs ratio Prior: '))
+results_output.write('{:<20.4f}\n'.format(Rorb_Rs_prior))
+results_output.write('{:>80}'.format('Best Rorb over Rs ratio From MCMC mean: '))
+results_output.write('{:<20.4f}\n'.format(best_Rorb_Rs_mcmc_mean))
+results_output.write('{:>80}'.format('1 Sigma Uncertainty Rorb over Rs ratio From MCMC Variance: '))
+results_output.write('{:<20.4f}\n'.format(Rorb_Rs_stand_dev_mcmc_mean))
+results_output.write('\n')
+
+results_output.write('{:>80}'.format('K amplitude Prior (km/s): '))
+results_output.write('{:<20.2f}\n'.format(K_amp_prior))
+results_output.write('{:>80}'.format('Best K amplitude From MCMC mean (km/s): '))
+results_output.write('{:<20.4f}\n'.format(best_K_amp_mcmc_mean))
+results_output.write('{:>80}'.format('1 Sigma Uncertainty K amplitude From MCMC Variance (km/s): '))
+results_output.write('{:<20.4f}\n'.format(K_amp_stand_dev_mcmc_mean))
 results_output.close()
+
+
+
+results_output_theory = open(save_data_directory + 'theoretical_RV.txt', 'w')
+time_string = "Time"
+RV_string = "RV"
+results_output_theory.write('{:50}'.format(time_string))
+results_output_theory.write('     {:50}\n'.format(RV_string))
+#results_output_theory.write('{:<50}     {:<50}\n'.format(time_string, RV_string)
+for i in range(len(RV_array)):
+    results_output_theory.write('{:<50.10e}     {:<50.5f}\n'.format(RV_array.loc[i,"Time"]/60.0, RV_array.loc[i, "RV"]))
+#endfor
+results_output_theory.close()
+
+if test_null == 'Y':
+    results_output_theory_null = open(save_data_directory + 'theoretical_RV_null.txt', 'w')
+    time_string = "Time"
+    RV_string = "RV"
+    results_output_theory_null.write('{:50}'.format(time_string))
+    results_output_theory_null.write('     {:50}\n'.format(RV_string))
+    # results_output_theory.write('{:<50}     {:<50}\n'.format(time_string, RV_string)
+    for i in range(len(RV_array_null)):
+        results_output_theory_null.write(
+            '{:<50.10e}     {:<50.5f}\n'.format(RV_array_null.loc[i, "Time"] / 60.0, RV_array_null.loc[i, "RV"]))
+    # endfor
+    results_output_theory_null.close()

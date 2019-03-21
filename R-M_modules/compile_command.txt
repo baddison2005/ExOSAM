@@ -1,0 +1,3 @@
+gfortran -c -ffree-line-length-none -std=f2008 -O3 ExOSAM_RM_effect_V03.f08 init_seed.f08 numz.f08 ran_mod.f08
+gfortran ExOSAM_RM_effect_V03.o init_seed.o numz.o ran_mod.o
+./a.out
